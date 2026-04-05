@@ -275,20 +275,20 @@ public class GameManager : MonoBehaviour
         switch (sector)
         {
             case SectorName.Eilat:
-                return new Vector2(900f, Random.Range(-500f, 500f));
+                return new Vector2(1500f, Random.Range(-500f, 500f));
 
             case SectorName.South:
-                return new Vector2(Random.Range(-350f, 350f), -1400f);
+                return new Vector2(Random.Range(-350f, 350f), -2000f);
 
             case SectorName.Center:
-                return new Vector2(Random.Range(-250f, 250f), 1400f);
+                return new Vector2(Random.Range(-250f, 250f), 2000f);
 
             case SectorName.Sharon:
-                return new Vector2(-900f, Random.Range(-500f, 500f));
+                return new Vector2(-1500f, Random.Range(-500f, 500f));
 
             case SectorName.North:
             default:
-                return new Vector2(Random.Range(-350f, 350f), 1400f);
+                return new Vector2(Random.Range(-350f, 350f), 2000f);
         }
     }
 }

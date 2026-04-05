@@ -14,7 +14,7 @@ public class MissileDirectionIndicator : MonoBehaviour
     private void Awake()
     {
         if (rectTransform == null)
-            rectTransform = GetComponent<RectTransform>();
+            rectTransform = GetComponentInChildren<RectTransform>();
 
         if (image == null)
             image = GetComponent<Image>();
@@ -98,8 +98,8 @@ public class MissileDirectionIndicator : MonoBehaviour
 
         rectTransform.anchoredPosition = new Vector2(clampedX, clampedY);
 
-        Vector2 toMissile = missilePos - rectTransform.anchoredPosition;
-        float angle = Mathf.Atan2(toMissile.y, toMissile.x) * Mathf.Rad2Deg;
-        rectTransform.rotation = Quaternion.Euler(0f, 0f, angle - 90f);
+        // Vector2 toMissile = missilePos - rectTransform.anchoredPosition;
+        // float angle = Mathf.Atan2(toMissile.y, toMissile.x) * Mathf.Rad2Deg;
+        // rectTransform.rotation = Quaternion.Euler(0f, 0f, angle - 90f);
     }
 }
