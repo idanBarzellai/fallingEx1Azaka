@@ -1,37 +1,66 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
+ public enum ToolType
+    {
+        Alert,
+        Release,
+        Ambulance
+    }
 public class DraggableTool : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
+   
+
     [Header("Tool Info")]
-    public string toolType; // "Alert", "Release", "Ambulance"
+    public ToolType toolType;
 
     private RectTransform rectTransform;
     private Canvas canvas;
     private CanvasGroup canvasGroup;
-
-    private Vector2 startAnchoredPosition;
-    private Transform startParent;
+    private RectTransform dragVisual;
+    private CanvasGroup dragVisualCanvasGroup;
 
     private void Awake()
     {
         rectTransform = GetComponent<RectTransform>();
         canvasGroup = GetComponent<CanvasGroup>();
         canvas = GetComponentInParent<Canvas>();
-
-        startAnchoredPosition = rectTransform.anchoredPosition;
-        startParent = transform.parent;
     }
 
     public void OnBeginDrag(PointerEventData eventData)
     {
+        GameObject dragObject = Instantiate(gameObject, canvas.transform);
+        dragObject.name = gameObject.name + "_DragVisual";
+
+        DraggableTool duplicateScript = dragObject.GetComponent<DraggableTool>();
+        if (duplicateScript != null)
+        {
+            Destroy(duplicateScript);
+        }
+
+        dragVisual = dragObject.GetComponent<RectTransform>();
+        dragVisual.position = rectTransform.position;
+        dragVisual.SetAsLastSibling();
+
+        dragVisualCanvasGroup = dragObject.GetComponent<CanvasGroup>();
+        if (dragVisualCanvasGroup == null)
+        {
+            dragVisualCanvasGroup = dragObject.AddComponent<CanvasGroup>();
+        }
+
+        dragVisualCanvasGroup.blocksRaycasts = false;
+        dragVisualCanvasGroup.alpha = 0.8f;
+
         canvasGroup.blocksRaycasts = false;
-        canvasGroup.alpha = 0.8f;
+        canvasGroup.alpha = 1f;
     }
 
     public void OnDrag(PointerEventData eventData)
     {
-        rectTransform.anchoredPosition += eventData.delta / canvas.scaleFactor;
+        if (dragVisual != null)
+        {
+            dragVisual.position += (Vector3)eventData.delta;
+        }
     }
 
     public void OnEndDrag(PointerEventData eventData)
@@ -39,8 +68,11 @@ public class DraggableTool : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         canvasGroup.blocksRaycasts = true;
         canvasGroup.alpha = 1f;
 
-        // Always snap back to toolbar after drop attempt
-        rectTransform.anchoredPosition = startAnchoredPosition;
-        transform.SetParent(startParent);
+        if (dragVisual != null)
+        {
+            Destroy(dragVisual.gameObject);
+            dragVisual = null;
+            dragVisualCanvasGroup = null;
+        }
     }
 }
