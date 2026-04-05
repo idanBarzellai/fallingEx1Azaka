@@ -3,14 +3,6 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-public enum MissileSpawnSide
-{
-    Eilat,
-    South,
-    Center,
-    Sharon,
-    North,
-}
 
 public class GameManager : MonoBehaviour
 {
@@ -29,21 +21,21 @@ public class GameManager : MonoBehaviour
     public RectTransform missileLayer;
     public RectTransform indicatorLayer;
 
+    [Header("Camera Frame In Canvas Space")]
+    public Rect visibleCameraRect = new Rect(-540f, -960f, 1080f, 1920f);
+
     [Header("UI")]
     public TMP_Text gameStateText;
 
     [Header("Missile Settings")]
-    public float delayBeforeNextMissile = 2f;
     public float preLaunchWarningTime = 1.2f;
     public float missileTravelDuration = 5.5f;
     public float smokeClearTime = 5f;
     public float ambulanceRecoveryDelay = 10f;
-
-    [Header("Visible Screen Area In Canvas Space")]
-    public Rect visibleCameraRect = new Rect(-540f, -960f, 1080f, 1920f);
+    [SerializeField] private float minLaunchDelay = 3.5f;
+[SerializeField] private float maxLaunchDelay = 6.5f;
 
     private bool gameOver = false;
-
     private readonly List<MissileEventData> activeMissiles = new List<MissileEventData>();
 
     private class MissileEventData
@@ -52,7 +44,7 @@ public class GameManager : MonoBehaviour
         public MissileUI missileUI;
         public MissileDirectionIndicator indicatorUI;
         public bool resolved;
-        public MissileSpawnSide spawnSide;
+        public SectorName spawnSide;
     }
 
     private void Awake()
@@ -72,7 +64,9 @@ public class GameManager : MonoBehaviour
         while (!gameOver)
         {
             StartCoroutine(StartMissileEventRoutine());
-            yield return new WaitForSeconds(delayBeforeNextMissile);
+                    float delay = Random.Range(minLaunchDelay, maxLaunchDelay);
+
+            yield return new WaitForSeconds(delay);
         }
     }
 
@@ -84,10 +78,12 @@ public class GameManager : MonoBehaviour
 
         targetSector.BeginIncoming();
 
-        MissileSpawnSide sector = GetSpawnSideForSector(targetSector.sectorName);
 
-        MissileDirectionIndicator indicator = Instantiate(directionIndicatorPrefab, indicatorLayer);
-        indicator.Show(sector);
+        MissileDirectionIndicator indicator = null;
+        if (directionIndicatorPrefab != null && indicatorLayer != null)
+        {
+            indicator = Instantiate(directionIndicatorPrefab, indicatorLayer);
+        }
 
         MissileEventData missileData = new MissileEventData
         {
@@ -95,7 +91,7 @@ public class GameManager : MonoBehaviour
             indicatorUI = indicator,
             missileUI = null,
             resolved = false,
-            spawnSide = sector
+            spawnSide = targetSector.sectorName
         };
 
         activeMissiles.Add(missileData);
@@ -103,31 +99,29 @@ public class GameManager : MonoBehaviour
         yield return new WaitForSeconds(preLaunchWarningTime);
 
         if (gameOver || missileData.resolved)
+        {
+            CleanupMissileEvent(missileData);
             yield break;
+        }
 
         MissileUI missile = Instantiate(missilePrefab, missileLayer);
         missileData.missileUI = missile;
 
-        Vector2 startPos = GetMissileStartPosition(sector);
-        Vector2 targetPos = GetSectorAnchoredPosition(targetSector);
+        Vector2 startPos = GetMissileStartPosition(missileData.spawnSide);
+        Vector2 targetPos = GetSectorAnchoredPosition(missileData.targetSector);
 
         missile.Launch(
             startPos,
             targetPos,
             missileTravelDuration,
-            visibleCameraRect,
-            () => OnMissileEnteredScreen(missileData),
             () => OnMissileImpact(missileData),
             () => OnMissileTapped(missileData)
         );
-    }
 
-    private void OnMissileEnteredScreen(MissileEventData missileData)
-    {
-        if (missileData == null || missileData.indicatorUI == null)
-            return;
-
-        missileData.indicatorUI.Hide();
+        if (missileData.indicatorUI != null)
+        {
+            missileData.indicatorUI.BeginTracking(missile.RectTransform, visibleCameraRect);
+        }
     }
 
     private void OnMissileTapped(MissileEventData missileData)
@@ -141,7 +135,7 @@ public class GameManager : MonoBehaviour
             missileData.missileUI.HideMissile();
 
         if (missileData.indicatorUI != null)
-            missileData.indicatorUI.Hide();
+            missileData.indicatorUI.StopTracking();
 
         missileData.targetSector.ResolveIntercepted();
 
@@ -159,7 +153,7 @@ public class GameManager : MonoBehaviour
         missileData.resolved = true;
 
         if (missileData.indicatorUI != null)
-            missileData.indicatorUI.Hide();
+            missileData.indicatorUI.StopTracking();
 
         missileData.targetSector.ResolveCrash();
 
@@ -174,6 +168,9 @@ public class GameManager : MonoBehaviour
 
     private void CleanupMissileEvent(MissileEventData missileData)
     {
+        if (missileData == null)
+            return;
+
         if (missileData.missileUI != null)
             Destroy(missileData.missileUI.gameObject);
 
@@ -234,7 +231,7 @@ public class GameManager : MonoBehaviour
                 missile.missileUI.HideMissile();
 
             if (missile.indicatorUI != null)
-                missile.indicatorUI.Hide();
+                missile.indicatorUI.StopTracking();
         }
 
         if (gameStateText != null)
@@ -245,12 +242,26 @@ public class GameManager : MonoBehaviour
 
     private SectorHandler GetRandomSector()
     {
+        List<SectorHandler> availableSectors = new List<SectorHandler>();
+
         SectorHandler[] sectors = new SectorHandler[]
         {
             northSector, southSector, centerSector, sharonSector, eilatSector
         };
 
-        return sectors[Random.Range(0, sectors.Length)];
+        foreach (SectorHandler sector in sectors)
+        {
+            if (sector == null)
+                continue;
+
+            if (sector.currentState == SectorState.Idle)
+                availableSectors.Add(sector);
+        }
+
+        if (availableSectors.Count == 0)
+            return null;
+
+        return availableSectors[Random.Range(0, availableSectors.Count)];
     }
 
     private Vector2 GetSectorAnchoredPosition(SectorHandler sector)
@@ -258,42 +269,24 @@ public class GameManager : MonoBehaviour
         return sector.GetComponent<RectTransform>().anchoredPosition;
     }
 
-    private MissileSpawnSide GetSpawnSideForSector(string sectorName)
-    {
-        switch (sectorName.ToLowerInvariant())
-        {
-            case "eilat":
-                return MissileSpawnSide.Eilat;
-            case "south":
-                return MissileSpawnSide.South;
-            case "center":
-                return MissileSpawnSide.Center;
-            case "sharon":
-                return MissileSpawnSide.Sharon;
-            case "north":
-                return MissileSpawnSide.North;
-            default:
-                return MissileSpawnSide.North;
-        }
-    }
 
-    private Vector2 GetMissileStartPosition(MissileSpawnSide sector)
+    private Vector2 GetMissileStartPosition(SectorName sector)
     {
         switch (sector)
         {
-            case MissileSpawnSide.Eilat:
+            case SectorName.Eilat:
                 return new Vector2(900f, Random.Range(-500f, 500f));
 
-            case MissileSpawnSide.South:
+            case SectorName.South:
                 return new Vector2(Random.Range(-350f, 350f), -1400f);
 
-            case MissileSpawnSide.Center:
-                return new Vector2(Random.Range(-350f, 350f), 1400f);
+            case SectorName.Center:
+                return new Vector2(Random.Range(-250f, 250f), 1400f);
 
-            case MissileSpawnSide.Sharon:
+            case SectorName.Sharon:
                 return new Vector2(-900f, Random.Range(-500f, 500f));
 
-            case MissileSpawnSide.North:
+            case SectorName.North:
             default:
                 return new Vector2(Random.Range(-350f, 350f), 1400f);
         }

@@ -19,7 +19,7 @@ public enum SectorState
 public class SectorHandler : MonoBehaviour
 {
     [Header("Sector Info")]
-    public string sectorName;
+    public SectorName sectorName;
     public SectorState currentState = SectorState.Idle;
 
     [Header("Visuals")]
@@ -34,6 +34,7 @@ public class SectorHandler : MonoBehaviour
     public Color needsAmbulanceCheckColor = new Color(1f, 0.5f, 0f);
     public Color needsAmbulanceColor = Color.red;
     public Color lostColor = Color.black;
+
 
     private Coroutine flickerRoutine;
 

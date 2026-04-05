@@ -1,8 +1,6 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class SectorDropZone : MonoBehaviour, IDropHandler
-{
     public enum SectorName
     {
         Eilat,
@@ -11,6 +9,10 @@ public class SectorDropZone : MonoBehaviour, IDropHandler
         Sharon,
         North,
     }
+
+public class SectorDropZone : MonoBehaviour, IDropHandler
+{
+
 
     public SectorName sectorName;
 

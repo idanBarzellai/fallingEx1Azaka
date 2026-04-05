@@ -12,7 +12,8 @@ public class MissileUI : MonoBehaviour, IPointerDownHandler
     private Coroutine moveRoutine;
     private Action tapCallback;
     private bool isActiveMissile = false;
-    private bool hasEnteredVisibleArea = false;
+
+    public RectTransform RectTransform => rectTransform;
 
     private void Awake()
     {
@@ -28,47 +29,26 @@ public class MissileUI : MonoBehaviour, IPointerDownHandler
         gameObject.SetActive(false);
     }
 
-    public void Launch(
-        Vector2 startPos,
-        Vector2 endPos,
-        float duration,
-        Rect visibleArea,
-        Action onEnteredVisibleArea,
-        Action onImpact,
-        Action onTapped)
+    public void Launch(Vector2 startPos, Vector2 endPos, float duration, Action onImpact, Action onTapped)
     {
         if (moveRoutine != null)
             StopCoroutine(moveRoutine);
 
         tapCallback = onTapped;
         isActiveMissile = true;
-        hasEnteredVisibleArea = false;
 
         gameObject.SetActive(true);
         transform.SetAsLastSibling();
-
         rectTransform.anchoredPosition = startPos;
 
         Vector2 direction = endPos - startPos;
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         rectTransform.rotation = Quaternion.Euler(0f, 0f, angle - 90f);
 
-        moveRoutine = StartCoroutine(MoveRoutine(
-            startPos,
-            endPos,
-            duration,
-            visibleArea,
-            onEnteredVisibleArea,
-            onImpact));
+        moveRoutine = StartCoroutine(MoveRoutine(startPos, endPos, duration, onImpact));
     }
 
-    private IEnumerator MoveRoutine(
-        Vector2 startPos,
-        Vector2 endPos,
-        float duration,
-        Rect visibleArea,
-        Action onEnteredVisibleArea,
-        Action onImpact)
+    private IEnumerator MoveRoutine(Vector2 startPos, Vector2 endPos, float duration, Action onImpact)
     {
         float elapsed = 0f;
 
@@ -77,13 +57,6 @@ public class MissileUI : MonoBehaviour, IPointerDownHandler
             elapsed += Time.deltaTime;
             float t = Mathf.Clamp01(elapsed / duration);
             rectTransform.anchoredPosition = Vector2.Lerp(startPos, endPos, t);
-
-            if (!hasEnteredVisibleArea && visibleArea.Contains(rectTransform.anchoredPosition))
-            {
-                hasEnteredVisibleArea = true;
-                onEnteredVisibleArea?.Invoke();
-            }
-
             yield return null;
         }
 
@@ -94,8 +67,7 @@ public class MissileUI : MonoBehaviour, IPointerDownHandler
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        if (!isActiveMissile)
-            return;
+        if (!isActiveMissile) return;
 
         isActiveMissile = false;
         tapCallback?.Invoke();

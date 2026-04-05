@@ -190,7 +190,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: 6f3a450583962f2458880ebcb5c6bda0, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -842,22 +842,23 @@ MonoBehaviour:
   centerSector: {fileID: 678138893}
   eilatSector: {fileID: 6122031255431425973}
   southSector: {fileID: 663444714}
-  missilePrefab: {fileID: 0}
-  directionIndicatorPrefab: {fileID: 0}
-  missileLayer: {fileID: 0}
-  indicatorLayer: {fileID: 0}
-  gameStateText: {fileID: 0}
-  delayBeforeNextMissile: 2
-  preLaunchWarningTime: 1.2
-  missileTravelDuration: 3
-  smokeClearTime: 5
-  ambulanceRecoveryDelay: 10
+  missilePrefab: {fileID: 3567594961397437173, guid: b74cc604c4dc7644fbd03210f6500c7d, type: 3}
+  directionIndicatorPrefab: {fileID: 3897518875347834782, guid: 253fef3e335f29e4fb3dae3fab33b2bf, type: 3}
+  missileLayer: {fileID: 996822476}
+  indicatorLayer: {fileID: 1689664413}
   visibleCameraRect:
     serializedVersion: 2
     x: -540
     y: -960
     width: 1080
     height: 1920
+  gameStateText: {fileID: 1235074906}
+  preLaunchWarningTime: 1.2
+  missileTravelDuration: 3
+  smokeClearTime: 5
+  ambulanceRecoveryDelay: 10
+  minLaunchDelay: 3.5
+  maxLaunchDelay: 6.5
 --- !u!1 &663444709
 GameObject:
   m_ObjectHideFlags: 0
@@ -960,7 +961,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55840c100ee7f554ea986fc8ac085fad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SectorHandler
-  sectorName: 
+  sectorName: 0
   currentState: 0
   baseImage: {fileID: 0}
   idleColor: {r: 1, g: 1, b: 1, a: 1}
@@ -1073,7 +1074,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55840c100ee7f554ea986fc8ac085fad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SectorHandler
-  sectorName: 
+  sectorName: 0
   currentState: 0
   baseImage: {fileID: 0}
   idleColor: {r: 1, g: 1, b: 1, a: 1}
@@ -1265,7 +1266,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55840c100ee7f554ea986fc8ac085fad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SectorHandler
-  sectorName: 
+  sectorName: 0
   currentState: 0
   baseImage: {fileID: 0}
   idleColor: {r: 1, g: 1, b: 1, a: 1}
@@ -1347,7 +1348,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 1333092200239403271, guid: 22b349eb79a9d2848af725c4162453eb, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1757,7 +1758,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55840c100ee7f554ea986fc8ac085fad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SectorHandler
-  sectorName: 
+  sectorName: 0
   currentState: 0
   baseImage: {fileID: 0}
   idleColor: {r: 1, g: 1, b: 1, a: 1}
@@ -1875,7 +1876,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: 4692de99b964ff140b57fe595f3835af, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -2215,7 +2216,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55840c100ee7f554ea986fc8ac085fad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SectorHandler
-  sectorName: 
+  sectorName: 0
   currentState: 0
   baseImage: {fileID: 6122031255431425971}
   idleColor: {r: 1, g: 1, b: 1, a: 1}
