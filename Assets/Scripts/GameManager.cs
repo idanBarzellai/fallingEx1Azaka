@@ -55,28 +55,38 @@ public class GameManager : MonoBehaviour
             yield return new WaitForSeconds(delayBeforeNextMissile);
         }
     }
+private void StartMissileEvent()
+{
+    missileEventActive = true;
+    missileResolved = false;
 
-    private void StartMissileEvent()
+    currentTargetSector = GetRandomSector();
+
+    if (currentTargetSector == null)
     {
-        missileEventActive = true;
-        missileResolved = false;
-
-        currentTargetSector = GetRandomSector();
-        currentTargetSector.BeginIncoming();
-
-        UpdateDirectionIndicator(currentTargetSector.sectorName);
-
-        Vector2 startPos = GetMissileStartPosition(currentTargetSector.sectorName);
-        Vector2 targetPos = GetSectorAnchoredPosition(currentTargetSector);
-
-        missileUI.Launch(
-            startPos,
-            targetPos,
-            missileTravelDuration,
-            OnMissileImpact,
-            OnMissileTapped
-        );
+        Debug.LogError("No target sector found.");
+        return;
     }
+
+    Debug.Log("Starting missile event for sector: " + currentTargetSector.sectorName);
+
+    currentTargetSector.BeginIncoming();
+
+    UpdateDirectionIndicator(currentTargetSector.sectorName);
+
+    Vector2 startPos = GetMissileStartPosition(currentTargetSector.sectorName);
+    Vector2 targetPos = GetSectorAnchoredPosition(currentTargetSector);
+
+    Debug.Log($"Missile start: {startPos}, target: {targetPos}");
+
+    missileUI.Launch(
+        startPos,
+        targetPos,
+        missileTravelDuration,
+        OnMissileImpact,
+        OnMissileTapped
+    );
+}
 
     private void OnMissileTapped()
     {

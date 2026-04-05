@@ -37,11 +37,13 @@ public class SectorHandler : MonoBehaviour
 
     private Coroutine flickerRoutine;
 
-    private void Start()
-    {
-        UpdateVisual();
-    }
+ private void Awake()
+{
+    if (baseImage == null)
+        baseImage = GetComponent<Image>();
 
+    UpdateVisual();
+}
     public void HandleTool(ToolType toolType)
     {
         switch (toolType)
@@ -151,43 +153,55 @@ public class SectorHandler : MonoBehaviour
         UpdateVisual();
     }
 
-    private void StartFlicker()
+private void StartFlicker()
+{
+    if (baseImage == null)
     {
-        if (flickerRoutine != null)
-        {
-            StopCoroutine(flickerRoutine);
-        }
-
-        flickerRoutine = StartCoroutine(FlickerRoutine());
+        Debug.LogError($"{sectorName}: baseImage is not assigned.");
+        return;
     }
 
-    private void StopFlicker()
+    if (flickerRoutine != null)
     {
-        if (flickerRoutine != null)
-        {
-            StopCoroutine(flickerRoutine);
-            flickerRoutine = null;
-        }
+        StopCoroutine(flickerRoutine);
+    }
 
+    flickerRoutine = StartCoroutine(FlickerRoutine());
+}
+
+private void StopFlicker()
+{
+    if (flickerRoutine != null)
+    {
+        StopCoroutine(flickerRoutine);
+        flickerRoutine = null;
+    }
+
+    if (baseImage != null)
+    {
+        Color c = baseImage.color;
+        c.a = 1f;
+        baseImage.color = c;
+    }
+}
+
+private IEnumerator FlickerRoutine()
+{
+    bool lowAlpha = false;
+
+    while (true)
+    {
         if (baseImage != null)
         {
-            baseImage.enabled = true;
+            Color c = baseImage.color;
+            c.a = lowAlpha ? 0.35f : 1f;
+            baseImage.color = c;
+            lowAlpha = !lowAlpha;
         }
+
+        yield return new WaitForSeconds(0.15f);
     }
-
-    private IEnumerator FlickerRoutine()
-    {
-        while (true)
-        {
-            if (baseImage != null)
-            {
-                baseImage.enabled = !baseImage.enabled;
-            }
-
-            yield return new WaitForSeconds(0.2f);
-        }
-    }
-
+}
     private void UpdateVisual()
     {
         if (baseImage == null) return;

@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class MissileUI : MonoBehaviour, IPointerClickHandler
+public class MissileUI : MonoBehaviour, IPointerDownHandler
 {
     public RectTransform rectTransform;
     public Image image;
@@ -21,6 +21,9 @@ public class MissileUI : MonoBehaviour, IPointerClickHandler
         if (image == null)
             image = GetComponent<Image>();
 
+        if (image != null)
+            image.raycastTarget = true;
+
         HideMissile();
     }
 
@@ -35,6 +38,8 @@ public class MissileUI : MonoBehaviour, IPointerClickHandler
         isActiveMissile = true;
 
         gameObject.SetActive(true);
+        transform.SetAsLastSibling();
+
         rectTransform.anchoredPosition = startPos;
 
         Vector2 direction = endPos - startPos;
@@ -61,9 +66,11 @@ public class MissileUI : MonoBehaviour, IPointerClickHandler
         onImpact?.Invoke();
     }
 
-    public void OnPointerClick(PointerEventData eventData)
+    public void OnPointerDown(PointerEventData eventData)
     {
         if (!isActiveMissile) return;
+
+        isActiveMissile = false;
         tapCallback?.Invoke();
     }
 
