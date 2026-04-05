@@ -1,7 +1,16 @@
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
+
+public enum MissileSpawnSide
+{
+    Eilat,
+    South,
+    Center,
+    Sharon,
+    North,
+}
 
 public class GameManager : MonoBehaviour
 {
@@ -14,21 +23,37 @@ public class GameManager : MonoBehaviour
     public SectorHandler eilatSector;
     public SectorHandler southSector;
 
+    [Header("Prefabs / Parents")]
+    public MissileUI missilePrefab;
+    public MissileDirectionIndicator directionIndicatorPrefab;
+    public RectTransform missileLayer;
+    public RectTransform indicatorLayer;
+
     [Header("UI")]
-    public TMP_Text directionIndicatorText;
-    public MissileUI missileUI;
     public TMP_Text gameStateText;
 
     [Header("Missile Settings")]
     public float delayBeforeNextMissile = 2f;
-    public float missileTravelDuration = 3f;
+    public float preLaunchWarningTime = 1.2f;
+    public float missileTravelDuration = 5.5f;
     public float smokeClearTime = 5f;
     public float ambulanceRecoveryDelay = 10f;
 
-    private SectorHandler currentTargetSector;
-    private bool missileEventActive = false;
-    private bool missileResolved = false;
+    [Header("Visible Screen Area In Canvas Space")]
+    public Rect visibleCameraRect = new Rect(-540f, -960f, 1080f, 1920f);
+
     private bool gameOver = false;
+
+    private readonly List<MissileEventData> activeMissiles = new List<MissileEventData>();
+
+    private class MissileEventData
+    {
+        public SectorHandler targetSector;
+        public MissileUI missileUI;
+        public MissileDirectionIndicator indicatorUI;
+        public bool resolved;
+        public MissileSpawnSide spawnSide;
+    }
 
     private void Awake()
     {
@@ -46,81 +71,116 @@ public class GameManager : MonoBehaviour
 
         while (!gameOver)
         {
-            if (!missileEventActive)
-            {
-                StartMissileEvent();
-            }
-
-            yield return new WaitUntil(() => !missileEventActive || gameOver);
+            StartCoroutine(StartMissileEventRoutine());
             yield return new WaitForSeconds(delayBeforeNextMissile);
         }
     }
-private void StartMissileEvent()
-{
-    missileEventActive = true;
-    missileResolved = false;
 
-    currentTargetSector = GetRandomSector();
-
-    if (currentTargetSector == null)
+    private IEnumerator StartMissileEventRoutine()
     {
-        Debug.LogError("No target sector found.");
-        return;
-    }
+        SectorHandler targetSector = GetRandomSector();
+        if (targetSector == null)
+            yield break;
 
-    Debug.Log("Starting missile event for sector: " + currentTargetSector.sectorName);
+        targetSector.BeginIncoming();
 
-    currentTargetSector.BeginIncoming();
+        MissileSpawnSide sector = GetSpawnSideForSector(targetSector.sectorName);
 
-    UpdateDirectionIndicator(currentTargetSector.sectorName);
+        MissileDirectionIndicator indicator = Instantiate(directionIndicatorPrefab, indicatorLayer);
+        indicator.Show(sector);
 
-    Vector2 startPos = GetMissileStartPosition(currentTargetSector.sectorName);
-    Vector2 targetPos = GetSectorAnchoredPosition(currentTargetSector);
-
-    Debug.Log($"Missile start: {startPos}, target: {targetPos}");
-
-    missileUI.Launch(
-        startPos,
-        targetPos,
-        missileTravelDuration,
-        OnMissileImpact,
-        OnMissileTapped
-    );
-}
-
-    private void OnMissileTapped()
-    {
-        if (!missileEventActive || missileResolved || currentTargetSector == null)
-            return;
-
-        missileResolved = true;
-        missileUI.HideMissile();
-
-        currentTargetSector.ResolveIntercepted();
-
-        if (currentTargetSector.currentState == SectorState.Smoked)
+        MissileEventData missileData = new MissileEventData
         {
-            StartCoroutine(SmokeClearRoutine(currentTargetSector));
-        }
+            targetSector = targetSector,
+            indicatorUI = indicator,
+            missileUI = null,
+            resolved = false,
+            spawnSide = sector
+        };
 
-        EndMissileEvent();
+        activeMissiles.Add(missileData);
+
+        yield return new WaitForSeconds(preLaunchWarningTime);
+
+        if (gameOver || missileData.resolved)
+            yield break;
+
+        MissileUI missile = Instantiate(missilePrefab, missileLayer);
+        missileData.missileUI = missile;
+
+        Vector2 startPos = GetMissileStartPosition(sector);
+        Vector2 targetPos = GetSectorAnchoredPosition(targetSector);
+
+        missile.Launch(
+            startPos,
+            targetPos,
+            missileTravelDuration,
+            visibleCameraRect,
+            () => OnMissileEnteredScreen(missileData),
+            () => OnMissileImpact(missileData),
+            () => OnMissileTapped(missileData)
+        );
     }
 
-    private void OnMissileImpact()
+    private void OnMissileEnteredScreen(MissileEventData missileData)
     {
-        if (!missileEventActive || missileResolved || currentTargetSector == null)
+        if (missileData == null || missileData.indicatorUI == null)
             return;
 
-        missileResolved = true;
-        currentTargetSector.ResolveCrash();
+        missileData.indicatorUI.Hide();
+    }
 
-        if (currentTargetSector.currentState == SectorState.Lost)
+    private void OnMissileTapped(MissileEventData missileData)
+    {
+        if (missileData == null || missileData.resolved || missileData.targetSector == null)
+            return;
+
+        missileData.resolved = true;
+
+        if (missileData.missileUI != null)
+            missileData.missileUI.HideMissile();
+
+        if (missileData.indicatorUI != null)
+            missileData.indicatorUI.Hide();
+
+        missileData.targetSector.ResolveIntercepted();
+
+        if (missileData.targetSector.currentState == SectorState.Smoked)
+            StartCoroutine(SmokeClearRoutine(missileData.targetSector));
+
+        CleanupMissileEvent(missileData);
+    }
+
+    private void OnMissileImpact(MissileEventData missileData)
+    {
+        if (missileData == null || missileData.resolved || missileData.targetSector == null)
+            return;
+
+        missileData.resolved = true;
+
+        if (missileData.indicatorUI != null)
+            missileData.indicatorUI.Hide();
+
+        missileData.targetSector.ResolveCrash();
+
+        if (missileData.targetSector.currentState == SectorState.Lost)
         {
             TriggerGameOver();
             return;
         }
 
-        EndMissileEvent();
+        CleanupMissileEvent(missileData);
+    }
+
+    private void CleanupMissileEvent(MissileEventData missileData)
+    {
+        if (missileData.missileUI != null)
+            Destroy(missileData.missileUI.gameObject);
+
+        if (missileData.indicatorUI != null)
+            Destroy(missileData.indicatorUI.gameObject);
+
+        activeMissiles.Remove(missileData);
     }
 
     public void StartAmbulanceProcess(SectorHandler sector)
@@ -148,8 +208,8 @@ private void StartMissileEvent()
         if (initialState == SectorState.NeedsAmbulanceCheck)
         {
             yield return new WaitForSeconds(2f);
-    sector.SetReadyForRelease();
-            Debug.Log(sector.sectorName + " ambulance check complete. Returned to idle.");
+            sector.SetReadyForRelease();
+            Debug.Log(sector.sectorName + " ambulance check complete. Ready for release.");
         }
         else if (initialState == SectorState.NeedsAmbulance)
         {
@@ -164,25 +224,21 @@ private void StartMissileEvent()
         }
     }
 
-    private void EndMissileEvent()
-    {
-        missileUI.HideMissile();
-        directionIndicatorText.text = "-";
-        missileEventActive = false;
-        currentTargetSector = null;
-    }
-
     private void TriggerGameOver()
     {
         gameOver = true;
-        missileEventActive = false;
-        missileUI.HideMissile();
-        directionIndicatorText.text = "X";
+
+        foreach (var missile in activeMissiles)
+        {
+            if (missile.missileUI != null)
+                missile.missileUI.HideMissile();
+
+            if (missile.indicatorUI != null)
+                missile.indicatorUI.Hide();
+        }
 
         if (gameStateText != null)
-        {
             gameStateText.text = "GAME OVER";
-        }
 
         Debug.Log("Game Over: sector was not alerted and missile crashed.");
     }
@@ -194,13 +250,7 @@ private void StartMissileEvent()
             northSector, southSector, centerSector, sharonSector, eilatSector
         };
 
-        int randomIndex = Random.Range(0, sectors.Length);
-        return sectors[randomIndex];
-    }
-
-    private void UpdateDirectionIndicator(string sectorName)
-    {
-        directionIndicatorText.text = sectorName.ToUpper();
+        return sectors[Random.Range(0, sectors.Length)];
     }
 
     private Vector2 GetSectorAnchoredPosition(SectorHandler sector)
@@ -208,16 +258,44 @@ private void StartMissileEvent()
         return sector.GetComponent<RectTransform>().anchoredPosition;
     }
 
-    private Vector2 GetMissileStartPosition(string sectorName)
+    private MissileSpawnSide GetSpawnSideForSector(string sectorName)
     {
         switch (sectorName.ToLowerInvariant())
         {
-            case "north": return new Vector2(0f, 1400f);
-            case "south": return new Vector2(0f, -1400f);
-            case "sharon":  return new Vector2(-800f, 0f);
-            case "eilat":  return new Vector2(800f, 0f);
-            case "center": return new Vector2(0f, 1400f);
-            default: return new Vector2(0f, 1400f);
+            case "eilat":
+                return MissileSpawnSide.Eilat;
+            case "south":
+                return MissileSpawnSide.South;
+            case "center":
+                return MissileSpawnSide.Center;
+            case "sharon":
+                return MissileSpawnSide.Sharon;
+            case "north":
+                return MissileSpawnSide.North;
+            default:
+                return MissileSpawnSide.North;
+        }
+    }
+
+    private Vector2 GetMissileStartPosition(MissileSpawnSide sector)
+    {
+        switch (sector)
+        {
+            case MissileSpawnSide.Eilat:
+                return new Vector2(900f, Random.Range(-500f, 500f));
+
+            case MissileSpawnSide.South:
+                return new Vector2(Random.Range(-350f, 350f), -1400f);
+
+            case MissileSpawnSide.Center:
+                return new Vector2(Random.Range(-350f, 350f), 1400f);
+
+            case MissileSpawnSide.Sharon:
+                return new Vector2(-900f, Random.Range(-500f, 500f));
+
+            case MissileSpawnSide.North:
+            default:
+                return new Vector2(Random.Range(-350f, 350f), 1400f);
         }
     }
 }

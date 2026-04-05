@@ -155,16 +155,8 @@ public class SectorHandler : MonoBehaviour
 
 private void StartFlicker()
 {
-    if (baseImage == null)
-    {
-        Debug.LogError($"{sectorName}: baseImage is not assigned.");
-        return;
-    }
-
     if (flickerRoutine != null)
-    {
         StopCoroutine(flickerRoutine);
-    }
 
     flickerRoutine = StartCoroutine(FlickerRoutine());
 }
@@ -187,16 +179,16 @@ private void StopFlicker()
 
 private IEnumerator FlickerRoutine()
 {
-    bool lowAlpha = false;
+    bool dim = false;
 
     while (true)
     {
         if (baseImage != null)
         {
             Color c = baseImage.color;
-            c.a = lowAlpha ? 0.35f : 1f;
+            c.a = dim ? 0.35f : 1f;
             baseImage.color = c;
-            lowAlpha = !lowAlpha;
+            dim = !dim;
         }
 
         yield return new WaitForSeconds(0.15f);
