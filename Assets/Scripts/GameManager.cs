@@ -137,10 +137,13 @@ public class GameManager : MonoBehaviour
         if (missileData.indicatorUI != null)
             missileData.indicatorUI.StopTracking();
 
-        missileData.targetSector.ResolveIntercepted();
+       missileData.targetSector.ResolveIntercepted();
 
-        if (missileData.targetSector.currentState == SectorState.Smoked)
-            StartCoroutine(SmokeClearRoutine(missileData.targetSector));
+if (missileData.targetSector.currentState == SectorState.Smoked)
+{
+    missileData.targetSector.PlayInterceptSmokeSequence();
+    StartCoroutine(SmokeClearRoutine(missileData.targetSector));
+}
 
         CleanupMissileEvent(missileData);
     }
@@ -155,13 +158,19 @@ public class GameManager : MonoBehaviour
         if (missileData.indicatorUI != null)
             missileData.indicatorUI.StopTracking();
 
-        missileData.targetSector.ResolveCrash();
+missileData.targetSector.ResolveCrash();
 
-        if (missileData.targetSector.currentState == SectorState.Lost)
-        {
-            TriggerGameOver();
-            return;
-        }
+if (missileData.targetSector.currentState == SectorState.NeedsAmbulance ||
+    missileData.targetSector.currentState == SectorState.Lost)
+{
+    missileData.targetSector.PlayCrashSequenceThenSmoke();
+}
+
+if (missileData.targetSector.currentState == SectorState.Lost)
+{
+    TriggerGameOver();
+    return;
+}
 
         CleanupMissileEvent(missileData);
     }
@@ -185,17 +194,17 @@ public class GameManager : MonoBehaviour
         StartCoroutine(AmbulanceRoutine(sector));
     }
 
-    private IEnumerator SmokeClearRoutine(SectorHandler sector)
+private IEnumerator SmokeClearRoutine(SectorHandler sector)
+{
+    yield return new WaitForSeconds(smokeClearTime);
+
+    if (sector.currentState == SectorState.Smoked)
     {
-        yield return new WaitForSeconds(smokeClearTime);
-
-        if (sector.currentState == SectorState.Smoked)
-        {
-            sector.SetReadyForRelease();
-            Debug.Log(sector.sectorName + " smoke cleared. Ready for release.");
-        }
+        yield return StartCoroutine(sector.ClearSmokeWithAnimation());
+        sector.SetReadyForRelease();
+        Debug.Log(sector.sectorName + " smoke cleared. Ready for release.");
     }
-
+}
     private IEnumerator AmbulanceRoutine(SectorHandler sector)
     {
         SectorState initialState = sector.currentState;

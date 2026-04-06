@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,15 +16,22 @@ public enum SectorState
     Lost                     // not alerted + crashed
 }
 
-
 public class SectorHandler : MonoBehaviour
 {
     [Header("Sector Info")]
     public SectorName sectorName;
     public SectorState currentState = SectorState.Idle;
 
-    [Header("Visuals")]
+    [Header("Visual References")]
+    [Tooltip("The Image that changes color/flickers. Can be on this object or a child.")]
     public Image baseImage;
+
+    [Tooltip("Parent under which smoke / explosion UI prefabs will spawn.")]
+    public RectTransform vfxAnchor;
+
+    [Header("UI VFX Prefabs")]
+    public GameObject smokePrefab;
+    public GameObject explosionPrefab;
 
     [Header("State Colors")]
     public Color idleColor = Color.white;
@@ -35,16 +43,52 @@ public class SectorHandler : MonoBehaviour
     public Color needsAmbulanceColor = Color.red;
     public Color lostColor = Color.black;
 
+    [Header("Crash VFX")]
+    public int crashExplosionCount = 4;
+    public float timeBetweenCrashExplosions = 0.18f;
+    public float crashExplosionRadius = 50f;
+
+    [Header("Smoke VFX")]
+public int smokeCloudCount = 6;
+public float smokeScatterRadius = 70f;
+public float smokeClearAnimationDuration = 0.8f;
 
     private Coroutine flickerRoutine;
+    private Coroutine activeVfxRoutine;
 
- private void Awake()
-{
-    if (baseImage == null)
-        baseImage = GetComponent<Image>();
+private readonly List<GameObject> activeSmokeInstances = new List<GameObject>();
+    private void Awake()
+    {
+        AutoAssignReferences();
+        UpdateVisual();
+    }
 
-    UpdateVisual();
-}
+    private void AutoAssignReferences()
+    {
+        if (baseImage == null)
+        {
+            baseImage = GetComponent<Image>();
+
+            if (baseImage == null)
+                baseImage = GetComponentInChildren<Image>(true);
+        }
+
+        if (vfxAnchor == null)
+        {
+            Transform anchor = transform.Find("VFXAnchor");
+            if (anchor != null)
+                vfxAnchor = anchor as RectTransform;
+        }
+
+        if (vfxAnchor == null)
+        {
+            vfxAnchor = transform as RectTransform;
+        }
+
+        if (vfxAnchor != null)
+            vfxAnchor.SetAsLastSibling();
+    }
+
     public void HandleTool(ToolType toolType)
     {
         switch (toolType)
@@ -76,27 +120,25 @@ public class SectorHandler : MonoBehaviour
         }
     }
 
-    private void TryApplyRelease()
+ private void TryApplyRelease()
+{
+    if (currentState == SectorState.WaitingForRelease)
     {
-        if (currentState == SectorState.WaitingForRelease)
-        {
-            SetState(SectorState.Idle);
-            Debug.Log(sectorName + " released back to idle.");
-        }
-        else
-        {
-            Debug.Log("Release cannot be applied to " + sectorName + " while state is " + currentState);
-        }
+        StopAllSectorVfx();
+        SetState(SectorState.Idle);
+        Debug.Log(sectorName + " released back to idle.");
     }
-
+    else
+    {
+        Debug.Log("Release cannot be applied to " + sectorName + " while state is " + currentState);
+    }
+}
     private void TryApplyAmbulance()
     {
         if (currentState == SectorState.NeedsAmbulance || currentState == SectorState.NeedsAmbulanceCheck)
         {
             if (GameManager.Instance != null)
-            {
                 GameManager.Instance.StartAmbulanceProcess(this);
-            }
         }
         else
         {
@@ -143,10 +185,10 @@ public class SectorHandler : MonoBehaviour
         }
     }
 
-    public void SetReadyForRelease()
-    {
-        SetState(SectorState.WaitingForRelease);
-    }
+   public void SetReadyForRelease()
+{
+    SetState(SectorState.WaitingForRelease);
+}
 
     public void SetState(SectorState newState)
     {
@@ -154,79 +196,220 @@ public class SectorHandler : MonoBehaviour
         UpdateVisual();
     }
 
-private void StartFlicker()
-{
-    if (flickerRoutine != null)
-        StopCoroutine(flickerRoutine);
-
-    flickerRoutine = StartCoroutine(FlickerRoutine());
-}
-
-private void StopFlicker()
-{
-    if (flickerRoutine != null)
+    public void PlayInterceptSmokeSequence()
     {
-        StopCoroutine(flickerRoutine);
-        flickerRoutine = null;
+        if (activeVfxRoutine != null)
+            StopCoroutine(activeVfxRoutine);
+
+        activeVfxRoutine = StartCoroutine(InterceptSmokeRoutine());
     }
 
-    if (baseImage != null)
+    public void PlayCrashSequenceThenSmoke()
     {
-        Color c = baseImage.color;
-        c.a = 1f;
-        baseImage.color = c;
+        if (activeVfxRoutine != null)
+            StopCoroutine(activeVfxRoutine);
+
+        activeVfxRoutine = StartCoroutine(CrashSequenceRoutine());
+    }
+
+    private IEnumerator InterceptSmokeRoutine()
+    {
+        StopAllSectorVfx();
+        SpawnSmoke();
+        yield break;
+    }
+
+    private IEnumerator CrashSequenceRoutine()
+    {
+        StopAllSectorVfx();
+
+        for (int i = 0; i < crashExplosionCount; i++)
+        {
+            SpawnExplosionAtRandomOffset();
+            yield return new WaitForSeconds(timeBetweenCrashExplosions);
+        }
+
+        SpawnSmoke();
+    }
+
+private void SpawnSmoke()
+{
+    if (smokePrefab == null || vfxAnchor == null)
+        return;
+
+    StopSmokeOnly();
+
+    for (int i = 0; i < smokeCloudCount; i++)
+    {
+        GameObject smoke = Instantiate(smokePrefab, vfxAnchor);
+
+        Vector2 offset = Random.insideUnitCircle * smokeScatterRadius;
+        SetupSpawnedUI(smoke, offset);
+
+        activeSmokeInstances.Add(smoke);
     }
 }
 
-private IEnumerator FlickerRoutine()
-{
-    bool dim = false;
-
-    while (true)
+    private void SpawnExplosionAtRandomOffset()
     {
+        if (explosionPrefab == null || vfxAnchor == null)
+            return;
+
+        GameObject boom = Instantiate(explosionPrefab, vfxAnchor);
+        Vector2 offset = Random.insideUnitCircle * crashExplosionRadius;
+        SetupSpawnedUI(boom, offset);
+    }
+
+    private void SetupSpawnedUI(GameObject go, Vector2 anchoredPos)
+    {
+        RectTransform rt = go.GetComponent<RectTransform>();
+        if (rt == null)
+            return;
+
+        rt.anchorMin = new Vector2(0.5f, 0.5f);
+        rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = anchoredPos;
+        rt.localScale = Vector3.one;
+        rt.SetAsLastSibling();
+    }
+
+private void StopSmokeOnly()
+{
+    for (int i = activeSmokeInstances.Count - 1; i >= 0; i--)
+    {
+        if (activeSmokeInstances[i] != null)
+            Destroy(activeSmokeInstances[i]);
+    }
+
+    activeSmokeInstances.Clear();
+}
+
+public IEnumerator ClearSmokeWithAnimation()
+{
+    for (int i = activeSmokeInstances.Count - 1; i >= 0; i--)
+    {
+        GameObject smoke = activeSmokeInstances[i];
+        if (smoke == null)
+            continue;
+
+        Animator animator = smoke.GetComponent<Animator>();
+        if (animator != null)
+        {
+            animator.SetBool("Clear", true);
+        }
+    }
+
+    yield return new WaitForSeconds(smokeClearAnimationDuration);
+
+    StopSmokeOnly();
+}
+    public void StopAllSectorVfx()
+    {
+        if (activeVfxRoutine != null)
+        {
+            StopCoroutine(activeVfxRoutine);
+            activeVfxRoutine = null;
+        }
+
+
+        if (vfxAnchor == null)
+            return;
+
+        List<GameObject> childrenToDestroy = new List<GameObject>();
+
+        for (int i = 0; i < vfxAnchor.childCount; i++)
+        {
+            childrenToDestroy.Add(vfxAnchor.GetChild(i).gameObject);
+        }
+
+        foreach (GameObject child in childrenToDestroy)
+        {
+            Destroy(child);
+        }
+    }
+
+    private void StartFlicker()
+    {
+        if (flickerRoutine != null)
+            StopCoroutine(flickerRoutine);
+
+        flickerRoutine = StartCoroutine(FlickerRoutine());
+    }
+
+    private void StopFlicker()
+    {
+        if (flickerRoutine != null)
+        {
+            StopCoroutine(flickerRoutine);
+            flickerRoutine = null;
+        }
+
         if (baseImage != null)
         {
             Color c = baseImage.color;
-            c.a = dim ? 0.35f : 1f;
+            c.a = 1f;
             baseImage.color = c;
-            dim = !dim;
         }
-
-        yield return new WaitForSeconds(0.15f);
     }
-}
+
+    private IEnumerator FlickerRoutine()
+    {
+        bool dim = false;
+
+        while (true)
+        {
+            if (baseImage != null)
+            {
+                Color c = baseImage.color;
+                c.a = dim ? 0.35f : 1f;
+                baseImage.color = c;
+                dim = !dim;
+            }
+
+            yield return new WaitForSeconds(0.15f);
+        }
+    }
+
     private void UpdateVisual()
     {
-        if (baseImage == null) return;
+        if (baseImage == null)
+            return;
 
         baseImage.enabled = true;
+
+        Color targetColor = idleColor;
 
         switch (currentState)
         {
             case SectorState.Idle:
-                baseImage.color = idleColor;
+                targetColor = idleColor;
                 break;
             case SectorState.Incoming:
-                baseImage.color = incomingColor;
+                targetColor = incomingColor;
                 break;
             case SectorState.AlertedIncoming:
-                baseImage.color = alertedIncomingColor;
+                targetColor = alertedIncomingColor;
                 break;
             case SectorState.Smoked:
-                baseImage.color = smokedColor;
+                targetColor = smokedColor;
                 break;
             case SectorState.WaitingForRelease:
-                baseImage.color = waitingForReleaseColor;
+                targetColor = waitingForReleaseColor;
                 break;
             case SectorState.NeedsAmbulanceCheck:
-                baseImage.color = needsAmbulanceCheckColor;
+                targetColor = needsAmbulanceCheckColor;
                 break;
             case SectorState.NeedsAmbulance:
-                baseImage.color = needsAmbulanceColor;
+                targetColor = needsAmbulanceColor;
                 break;
             case SectorState.Lost:
-                baseImage.color = lostColor;
+                targetColor = lostColor;
                 break;
         }
+
+        float currentAlpha = baseImage.color.a;
+        targetColor.a = currentAlpha <= 0f ? 1f : currentAlpha;
+        baseImage.color = targetColor;
     }
 }

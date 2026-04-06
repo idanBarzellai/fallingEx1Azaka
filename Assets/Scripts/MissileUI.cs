@@ -18,10 +18,10 @@ public class MissileUI : MonoBehaviour, IPointerDownHandler
     private void Awake()
     {
         if (rectTransform == null)
-            rectTransform = GetComponent<RectTransform>();
+            rectTransform = GetComponentInChildren<RectTransform>();
 
         if (image == null)
-            image = GetComponent<Image>();
+            image = GetComponentInChildren<Image>();
 
         if (image != null)
             image.raycastTarget = true;
