@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: b238a855a04f9a14e90923f5bff9f5bd
+guid: 6edbcb1eb83be1942b6cdd136bb85ab4
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -3267410476055986968
-    second: shield-ok-svgrepo-com_0
+      213: -8827034815281231847
+    second: israel-map-country-land-svgrepo-com_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -46,7 +46,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -139,23 +139,111 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: shield-ok-svgrepo-com_0
+      name: israel-map-country-land-svgrepo-com_0
       rect:
         serializedVersion: 2
-        x: 63
-        y: 20
-        width: 386
-        height: 451
+        x: 0
+        y: 2249
+        width: 1014
+        height: 496
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 8ecfa47cb73d7a2d0800000000000000
-      internalID: -3267410476055986968
+      spriteID: 91808276a92108580800000000000000
+      internalID: -8827034815281231847
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: israel-map-country-land-svgrepo-com_2
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1742
+        width: 1024
+        height: 503
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: da5bae558aa2d7c4795d1b59ee33de7f
+      internalID: 1779094748
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: israel-map-country-land-svgrepo-com_4
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1245
+        width: 1024
+        height: 500
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 462221e13a2219945b92fb3e6918e14a
+      internalID: -1594882064
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: israel-map-country-land-svgrepo-com_6
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 468
+        width: 1024
+        height: 777
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7292f02f98de2a54d8ac00d327665291
+      internalID: 2071793641
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: israel-map-country-land-svgrepo-com_8
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1024
+        height: 468
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 802d60ec1a7e05544908e2f52beda252
+      internalID: 1316727199
       vertices: []
       indices: 
       edges: []
@@ -164,7 +252,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 6f0fb1bfa68e12440a4fcf85cf5beed5
     internalID: 0
     vertices: []
     indices: 
@@ -172,9 +260,20 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":500.0,"y":500.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      shield-ok-svgrepo-com_0: -3267410476055986968
+      israel-map-country-land-svgrepo-com_0: -8827034815281231847
+      israel-map-country-land-svgrepo-com_1: 1891582434
+      israel-map-country-land-svgrepo-com_2: 1779094748
+      israel-map-country-land-svgrepo-com_3: 1393229797
+      israel-map-country-land-svgrepo-com_4: -1594882064
+      israel-map-country-land-svgrepo-com_5: 1621139761
+      israel-map-country-land-svgrepo-com_6: 2071793641
+      israel-map-country-land-svgrepo-com_7: 1682178330
+      israel-map-country-land-svgrepo-com_8: 1316727199
+      israel-map-country-land-svgrepo-com_9: 1449622839
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

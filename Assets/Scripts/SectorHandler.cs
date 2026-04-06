@@ -230,6 +230,47 @@ public class SectorHandler : MonoBehaviour
         activeVfxRoutine = StartCoroutine(InterceptSmokeRoutine());
     }
 
+    public void PlayInterceptSmokeSequenceAt(Vector2 missileAnchoredPosition, RectTransform sourceLayer)
+{
+    if (activeVfxRoutine != null)
+        StopCoroutine(activeVfxRoutine);
+
+    activeVfxRoutine = StartCoroutine(InterceptSmokeAtPointRoutine(missileAnchoredPosition, sourceLayer));
+}
+
+private IEnumerator InterceptSmokeAtPointRoutine(Vector2 missileAnchoredPosition, RectTransform sourceLayer)
+{
+    StopAllSectorVfx();
+    SpawnSmokeAtPoint(missileAnchoredPosition, sourceLayer);
+    yield break;
+}
+
+private void SpawnSmokeAtPoint(Vector2 worldAnchoredPosition, RectTransform sourceLayer)
+{
+    if (smokePrefab == null || vfxAnchor == null || sourceLayer == null)
+        return;
+
+    StopSmokeOnly();
+
+    Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(null, sourceLayer.TransformPoint(worldAnchoredPosition));
+
+    RectTransform parentRect = vfxAnchor;
+    Vector2 localPoint;
+
+    if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(parentRect, screenPoint, null, out localPoint))
+        localPoint = Vector2.zero;
+
+    int puffCount = 3;
+    float smallRadius = 80f;
+
+    for (int i = 0; i < puffCount; i++)
+    {
+        GameObject smoke = Instantiate(smokePrefab, vfxAnchor);
+        Vector2 offset = Random.insideUnitCircle * smallRadius;
+        SetupSpawnedUI(smoke, localPoint + offset);
+        activeSmokeInstances.Add(smoke);
+    }
+}
     public void PlayCrashSequenceThenSmoke()
     {
         if (activeVfxRoutine != null)
@@ -284,23 +325,20 @@ public class SectorHandler : MonoBehaviour
         SetupSpawnedUI(boom, offset);
     }
 
-    private void SetupSpawnedUI(GameObject go, Vector2 anchoredPos)
+   private void SetupSpawnedUI(GameObject vfxObject, Vector2 localPosition)
+{
+    RectTransform rt = vfxObject.GetComponent<RectTransform>();
+    if (rt != null)
     {
-        RectTransform rt = go.GetComponent<RectTransform>();
-        if (rt == null)
-            return;
-
         rt.anchorMin = new Vector2(0.5f, 0.5f);
         rt.anchorMax = new Vector2(0.5f, 0.5f);
         rt.pivot = new Vector2(0.5f, 0.5f);
-        rt.anchoredPosition = anchoredPos;
-        rt.localScale = Vector3.one * Random.Range(0.8f, 1.3f);
-        rt.localRotation = Quaternion.Euler(0, 0, Random.Range(0f, 360f));
-
-        // Smoke/explosions stay below timer
-        if (stateTimerImage != null)
-            rt.SetSiblingIndex(Mathf.Max(0, stateTimerImage.transform.GetSiblingIndex() - 1));
+        rt.anchoredPosition = localPosition;
+        rt.localScale = Vector3.one;
     }
+
+    vfxObject.transform.SetAsLastSibling();
+}
 
     private void StopSmokeOnly()
     {

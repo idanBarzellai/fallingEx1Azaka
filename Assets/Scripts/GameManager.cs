@@ -140,35 +140,39 @@ public class GameManager : MonoBehaviour
             missileData.indicatorUI.BeginTracking(missile.RectTransform, visibleCameraRect);
     }
 
-    private void OnMissileTapped(MissileEventData missileData)
+private void OnMissileTapped(MissileEventData missileData)
+{
+    if (missileData == null || missileData.resolved || missileData.targetSector == null || gameOver)
+        return;
+
+    missileData.resolved = true;
+
+    Vector2 missileHitPosition = Vector2.zero;
+    if (missileData.missileUI != null)
+        missileHitPosition = missileData.missileUI.RectTransform.anchoredPosition;
+
+    if (missileData.missileUI != null)
+        missileData.missileUI.HideMissile();
+
+    if (missileData.indicatorUI != null)
+        missileData.indicatorUI.StopTracking();
+
+    SectorHandler sector = missileData.targetSector;
+    sector.ResolveIntercepted();
+
+    if (sector.currentState == SectorState.Smoked)
     {
-        if (missileData == null || missileData.resolved || missileData.targetSector == null || gameOver)
-            return;
-
-        missileData.resolved = true;
-
-        if (missileData.missileUI != null)
-            missileData.missileUI.HideMissile();
-
-        if (missileData.indicatorUI != null)
-            missileData.indicatorUI.StopTracking();
-
-        SectorHandler sector = missileData.targetSector;
-        sector.ResolveIntercepted();
-
-        if (sector.currentState == SectorState.Smoked)
-        {
-            sector.PlayInterceptSmokeSequence();
-            sector.StartIconCountdown(smokeClearTime, sector.releaseIconSprite);
-            StartCoroutine(SmokeClearRoutine(sector));
-        }
-        else if (sector.currentState == SectorState.NeedsAmbulanceCheck)
-        {
-            StartAmbulancePenaltyLoop(sector);
-        }
-
-        CleanupMissileEvent(missileData);
+        sector.PlayInterceptSmokeSequenceAt(missileHitPosition, missileLayer);
+        sector.StartIconFillUp(smokeClearTime, sector.releaseIconSprite);
+        StartCoroutine(SmokeClearRoutine(sector));
     }
+    else if (sector.currentState == SectorState.NeedsAmbulanceCheck)
+    {
+        StartAmbulancePenaltyLoop(sector);
+    }
+
+    CleanupMissileEvent(missileData);
+}
 
     private void OnMissileImpact(MissileEventData missileData)
     {
@@ -279,7 +283,7 @@ public class GameManager : MonoBehaviour
         if (sector == null || gameOver)
             return;
 
-        sector.StartRepeatingIconFillUp(releaseNeglectInterval, sector.releaseIconSprite, () =>
+        sector.StartRepeatingIconCountdown(releaseNeglectInterval, sector.releaseIconSprite, () =>
         {
             if (sector.currentState == SectorState.WaitingForRelease)
             {
