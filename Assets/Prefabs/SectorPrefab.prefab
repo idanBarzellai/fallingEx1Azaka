@@ -87,7 +87,12 @@ MonoBehaviour:
   smokeCloudCount: 6
   smokeScatterRadius: 70
   smokeClearAnimationDuration: 0.8
-  stateTimerImage: {fileID: 0}
+  stateTimerImage: {fileID: 4228861784290904117}
+  alertIconSprite: {fileID: 1333092200239403271, guid: 22b349eb79a9d2848af725c4162453eb, type: 3}
+  releaseIconSprite: {fileID: 21300000, guid: 4692de99b964ff140b57fe595f3835af, type: 3}
+  ambulanceIconSprite: {fileID: 21300000, guid: 6f3a450583962f2458880ebcb5c6bda0, type: 3}
+  fadedHintAlpha: 0.35
+  activeTimerAlpha: 0.95
 --- !u!1 &4434592650894215718
 GameObject:
   m_ObjectHideFlags: 0

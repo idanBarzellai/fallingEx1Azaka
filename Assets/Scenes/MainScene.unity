@@ -447,7 +447,7 @@ GameObject:
   - component: {fileID: 457310444}
   - component: {fileID: 457310443}
   m_Layer: 5
-  m_Name: TimerText
+  m_Name: ReasonText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -469,8 +469,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -48.31656, y: -205.86249}
-  m_SizeDelta: {x: 142.8017, y: 35.7005}
+  m_AnchoredPosition: {x: -340.2, y: 913.4}
+  m_SizeDelta: {x: 331.2813, y: 132.5582}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &457310443
 MonoBehaviour:
@@ -492,7 +492,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: New Text
+  m_text: Reason
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -853,11 +853,16 @@ MonoBehaviour:
     width: 1080
     height: 1920
   gameStateText: {fileID: 1235074906}
+  livesText: {fileID: 1235074906}
+  loseReasonText: {fileID: 457310443}
+  startingLives: 5
+  loseReasonMessageDuration: 2.5
   preLaunchWarningTime: 1.2
   missileTravelDuration: 3
   smokeClearTime: 5
-  ambulanceRecoveryDelay: 10
   ambulanceProcessTime: 10
+  ambulanceTooLateInterval: 10
+  releaseNeglectInterval: 10
   minLaunchDelay: 3.5
   maxLaunchDelay: 6.5
 --- !u!1001 &650386903
@@ -1347,8 +1352,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -48.31656, y: -205.86249}
-  m_SizeDelta: {x: 142.8017, y: 35.7005}
+  m_AnchoredPosition: {x: -409.22424, y: 1017.1199}
+  m_SizeDelta: {x: 193.2315, y: 74.8896}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1235074906
 MonoBehaviour:
@@ -1370,7 +1375,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: New Text
+  m_text: 'Lives Count
+
+'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

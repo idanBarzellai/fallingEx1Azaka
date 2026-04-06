@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
@@ -26,18 +25,32 @@ public class GameManager : MonoBehaviour
 
     [Header("UI")]
     public TMP_Text gameStateText;
+    public TMP_Text livesText;
+    public TMP_Text loseReasonText;
+
+    [Header("Lives")]
+    public int startingLives = 5;
+    private int currentLives;
+
+    [Header("Penalty UI")]
+    public float loseReasonMessageDuration = 2.5f;
 
     [Header("Missile Settings")]
     public float preLaunchWarningTime = 1.2f;
     public float missileTravelDuration = 5.5f;
     public float smokeClearTime = 5f;
-    public float ambulanceRecoveryDelay = 10f;
     public float ambulanceProcessTime = 10f;
 
+    [Header("Penalty Timers")]
+    public float ambulanceTooLateInterval = 10f;
+    public float releaseNeglectInterval = 10f;
+
     [SerializeField] private float minLaunchDelay = 3.5f;
-[SerializeField] private float maxLaunchDelay = 6.5f;
+    [SerializeField] private float maxLaunchDelay = 6.5f;
 
     private bool gameOver = false;
+    private Coroutine loseReasonRoutine;
+
     private readonly List<MissileEventData> activeMissiles = new List<MissileEventData>();
 
     private class MissileEventData
@@ -56,6 +69,12 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
+        currentLives = startingLives;
+        RefreshLivesUI();
+
+        if (loseReasonText != null)
+            loseReasonText.text = "";
+
         StartCoroutine(GameLoop());
     }
 
@@ -66,8 +85,7 @@ public class GameManager : MonoBehaviour
         while (!gameOver)
         {
             StartCoroutine(StartMissileEventRoutine());
-                    float delay = Random.Range(minLaunchDelay, maxLaunchDelay);
-
+            float delay = Random.Range(minLaunchDelay, maxLaunchDelay);
             yield return new WaitForSeconds(delay);
         }
     }
@@ -79,13 +97,11 @@ public class GameManager : MonoBehaviour
             yield break;
 
         targetSector.BeginIncoming();
-
+        targetSector.ShowAlertHint();
 
         MissileDirectionIndicator indicator = null;
         if (directionIndicatorPrefab != null && indicatorLayer != null)
-        {
             indicator = Instantiate(directionIndicatorPrefab, indicatorLayer);
-        }
 
         MissileEventData missileData = new MissileEventData
         {
@@ -121,14 +137,12 @@ public class GameManager : MonoBehaviour
         );
 
         if (missileData.indicatorUI != null)
-        {
             missileData.indicatorUI.BeginTracking(missile.RectTransform, visibleCameraRect);
-        }
     }
 
     private void OnMissileTapped(MissileEventData missileData)
     {
-        if (missileData == null || missileData.resolved || missileData.targetSector == null)
+        if (missileData == null || missileData.resolved || missileData.targetSector == null || gameOver)
             return;
 
         missileData.resolved = true;
@@ -138,23 +152,27 @@ public class GameManager : MonoBehaviour
 
         if (missileData.indicatorUI != null)
             missileData.indicatorUI.StopTracking();
-    SectorHandler sector = missileData.targetSector;
 
-       sector.ResolveIntercepted();
+        SectorHandler sector = missileData.targetSector;
+        sector.ResolveIntercepted();
 
-if (sector.currentState == SectorState.Smoked)
-{
-    sector.PlayInterceptSmokeSequence();
-    sector.StartStateTimer(smokeClearTime);
-    StartCoroutine(SmokeClearRoutine(sector));
-}
+        if (sector.currentState == SectorState.Smoked)
+        {
+            sector.PlayInterceptSmokeSequence();
+            sector.StartIconCountdown(smokeClearTime, sector.releaseIconSprite);
+            StartCoroutine(SmokeClearRoutine(sector));
+        }
+        else if (sector.currentState == SectorState.NeedsAmbulanceCheck)
+        {
+            StartAmbulancePenaltyLoop(sector);
+        }
 
         CleanupMissileEvent(missileData);
     }
 
     private void OnMissileImpact(MissileEventData missileData)
     {
-        if (missileData == null || missileData.resolved || missileData.targetSector == null)
+        if (missileData == null || missileData.resolved || missileData.targetSector == null || gameOver)
             return;
 
         missileData.resolved = true;
@@ -162,20 +180,21 @@ if (sector.currentState == SectorState.Smoked)
         if (missileData.indicatorUI != null)
             missileData.indicatorUI.StopTracking();
 
-SectorHandler sector = missileData.targetSector;
+        SectorHandler sector = missileData.targetSector;
         sector.ResolveCrash();
 
-if (sector.currentState == SectorState.NeedsAmbulance ||
-    sector.currentState == SectorState.Lost)
-{
-    missileData.targetSector.PlayCrashSequenceThenSmoke();
-}
+        if (sector.currentState == SectorState.NeedsAmbulance || sector.currentState == SectorState.Lost)
+            sector.PlayCrashSequenceThenSmoke();
 
-if (missileData.targetSector.currentState == SectorState.Lost)
-{
-    TriggerGameOver();
-    return;
-}
+        if (sector.currentState == SectorState.Lost)
+        {
+            TriggerGameOver("Missile hit " + sector.sectorName + " without alert.");
+            CleanupMissileEvent(missileData);
+            return;
+        }
+
+        if (sector.currentState == SectorState.NeedsAmbulance)
+            StartAmbulancePenaltyLoop(sector);
 
         CleanupMissileEvent(missileData);
     }
@@ -195,44 +214,125 @@ if (missileData.targetSector.currentState == SectorState.Lost)
     }
 
     public void StartAmbulanceProcess(SectorHandler sector)
-{
-    SectorState requestedState = sector.currentState;
-
-    sector.SetState(SectorState.AmbulanceWorking);
-    sector.StartStateTimer(ambulanceProcessTime);
-
-    StartCoroutine(AmbulanceRoutine(sector, requestedState));
-}
-private IEnumerator SmokeClearRoutine(SectorHandler sector)
-{
-    yield return new WaitForSeconds(smokeClearTime);
-
-    if (sector.currentState == SectorState.Smoked)
     {
-        yield return StartCoroutine(sector.ClearSmokeWithAnimation());
-        sector.SetReadyForRelease();
-        Debug.Log(sector.sectorName + " smoke cleared. Ready for release.");
-    }
-}
- private IEnumerator AmbulanceRoutine(SectorHandler sector, SectorState requestedState)
-{
-    Debug.Log("Ambulance dispatched to " + sector.sectorName);
+        if (sector == null || gameOver)
+            return;
 
-    if (requestedState == SectorState.NeedsAmbulanceCheck)
+        SectorState requestedState = sector.currentState;
+
+        if (requestedState != SectorState.NeedsAmbulance &&
+            requestedState != SectorState.NeedsAmbulanceCheck)
+            return;
+
+        sector.StopRepeatingStateTimer();
+        sector.SetState(SectorState.AmbulanceWorking);
+
+        // Per your rule: AmbulanceWorking uses RELEASE icon filling 0 -> 1
+        sector.StartIconFillUp(ambulanceProcessTime, sector.releaseIconSprite);
+
+        StartCoroutine(AmbulanceRoutine(sector));
+    }
+
+    private IEnumerator SmokeClearRoutine(SectorHandler sector)
+    {
+        yield return new WaitForSeconds(smokeClearTime);
+
+        if (sector != null && sector.currentState == SectorState.Smoked)
+        {
+            yield return StartCoroutine(sector.ClearSmokeWithAnimation());
+            sector.SetReadyForRelease();
+            StartReleasePenaltyLoop(sector);
+        }
+    }
+
+    private IEnumerator AmbulanceRoutine(SectorHandler sector)
     {
         yield return new WaitForSeconds(ambulanceProcessTime);
-        sector.SetReadyForRelease();
-        Debug.Log(sector.sectorName + " ambulance check complete. Ready for release.");
-    }
-    else if (requestedState == SectorState.NeedsAmbulance)
-    {
-        yield return new WaitForSeconds(ambulanceProcessTime);
-        sector.SetReadyForRelease();
-        Debug.Log(sector.sectorName + " ambulance finished. Ready for release.");
-    }
-}
 
-    private void TriggerGameOver()
+        if (sector == null)
+            yield break;
+
+        if (sector.currentState == SectorState.AmbulanceWorking)
+        {
+            sector.SetReadyForRelease();
+            StartReleasePenaltyLoop(sector);
+        }
+    }
+
+    private void StartAmbulancePenaltyLoop(SectorHandler sector)
+    {
+        if (sector == null || gameOver)
+            return;
+
+        sector.StartRepeatingIconCountdown(ambulanceTooLateInterval, sector.ambulanceIconSprite, () =>
+        {
+            if (sector.currentState == SectorState.NeedsAmbulance ||
+                sector.currentState == SectorState.NeedsAmbulanceCheck)
+            {
+                LoseLife("Ambulance was too late in " + sector.sectorName + ".");
+            }
+        });
+    }
+
+    private void StartReleasePenaltyLoop(SectorHandler sector)
+    {
+        if (sector == null || gameOver)
+            return;
+
+        sector.StartRepeatingIconFillUp(releaseNeglectInterval, sector.releaseIconSprite, () =>
+        {
+            if (sector.currentState == SectorState.WaitingForRelease)
+            {
+                LoseLife("Citizens were not released in time in " + sector.sectorName + ".");
+            }
+        });
+    }
+
+    public void LoseLife(string reason)
+    {
+        if (gameOver)
+            return;
+
+        currentLives--;
+        RefreshLivesUI();
+        ShowLoseReason(reason);
+
+        Debug.Log("Lost life: " + reason + " | Lives left: " + currentLives);
+
+        if (currentLives <= 0)
+            TriggerGameOver(reason);
+    }
+
+    private void RefreshLivesUI()
+    {
+        if (livesText != null)
+            livesText.text = "Lives: " + currentLives;
+    }
+
+    private void ShowLoseReason(string reason)
+    {
+        if (loseReasonText == null)
+            return;
+
+        if (loseReasonRoutine != null)
+            StopCoroutine(loseReasonRoutine);
+
+        loseReasonRoutine = StartCoroutine(ShowLoseReasonRoutine(reason));
+    }
+
+    private IEnumerator ShowLoseReasonRoutine(string reason)
+    {
+        loseReasonText.text = reason;
+
+        yield return new WaitForSeconds(loseReasonMessageDuration);
+
+        if (!gameOver && loseReasonText != null)
+            loseReasonText.text = "";
+
+        loseReasonRoutine = null;
+    }
+
+    private void TriggerGameOver(string reason)
     {
         gameOver = true;
 
@@ -245,10 +345,23 @@ private IEnumerator SmokeClearRoutine(SectorHandler sector)
                 missile.indicatorUI.StopTracking();
         }
 
+        SectorHandler[] sectors = new SectorHandler[]
+        {
+            northSector, southSector, centerSector, sharonSector, eilatSector
+        };
+
+        foreach (var sector in sectors)
+        {
+            if (sector == null) continue;
+            sector.StopStateTimer();
+            sector.StopRepeatingStateTimer();
+        }
+
         if (gameStateText != null)
             gameStateText.text = "GAME OVER";
 
-        Debug.Log("Game Over: sector was not alerted and missile crashed.");
+        if (loseReasonText != null)
+            loseReasonText.text = reason;
     }
 
     private SectorHandler GetRandomSector()
@@ -279,7 +392,6 @@ private IEnumerator SmokeClearRoutine(SectorHandler sector)
     {
         return sector.GetComponent<RectTransform>().anchoredPosition;
     }
-
 
     private Vector2 GetMissileStartPosition(SectorName sector)
     {
