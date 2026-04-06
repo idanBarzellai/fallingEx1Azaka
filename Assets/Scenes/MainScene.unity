@@ -857,6 +857,7 @@ MonoBehaviour:
   missileTravelDuration: 3
   smokeClearTime: 5
   ambulanceRecoveryDelay: 10
+  ambulanceProcessTime: 10
   minLaunchDelay: 3.5
   maxLaunchDelay: 6.5
 --- !u!1001 &650386903
@@ -1956,6 +1957,10 @@ PrefabInstance:
       propertyPath: sectorName
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 4228861784290904117, guid: 7bc5545b20e276645bfbc0fba759c7dd, type: 3}
+      propertyPath: m_FillClockwise
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7533103319877388245, guid: 7bc5545b20e276645bfbc0fba759c7dd, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: 0
@@ -2186,6 +2191,10 @@ PrefabInstance:
     - target: {fileID: 839880233803680289, guid: 7bc5545b20e276645bfbc0fba759c7dd, type: 3}
       propertyPath: m_Name
       value: SectorPrefab_Eilat
+      objectReference: {fileID: 0}
+    - target: {fileID: 4228861784290904117, guid: 7bc5545b20e276645bfbc0fba759c7dd, type: 3}
+      propertyPath: m_FillAmount
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

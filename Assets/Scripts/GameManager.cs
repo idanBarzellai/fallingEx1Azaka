@@ -32,6 +32,8 @@ public class GameManager : MonoBehaviour
     public float missileTravelDuration = 5.5f;
     public float smokeClearTime = 5f;
     public float ambulanceRecoveryDelay = 10f;
+    public float ambulanceProcessTime = 10f;
+
     [SerializeField] private float minLaunchDelay = 3.5f;
 [SerializeField] private float maxLaunchDelay = 6.5f;
 
@@ -136,13 +138,15 @@ public class GameManager : MonoBehaviour
 
         if (missileData.indicatorUI != null)
             missileData.indicatorUI.StopTracking();
+    SectorHandler sector = missileData.targetSector;
 
-       missileData.targetSector.ResolveIntercepted();
+       sector.ResolveIntercepted();
 
-if (missileData.targetSector.currentState == SectorState.Smoked)
+if (sector.currentState == SectorState.Smoked)
 {
-    missileData.targetSector.PlayInterceptSmokeSequence();
-    StartCoroutine(SmokeClearRoutine(missileData.targetSector));
+    sector.PlayInterceptSmokeSequence();
+    sector.StartStateTimer(smokeClearTime);
+    StartCoroutine(SmokeClearRoutine(sector));
 }
 
         CleanupMissileEvent(missileData);
@@ -158,10 +162,11 @@ if (missileData.targetSector.currentState == SectorState.Smoked)
         if (missileData.indicatorUI != null)
             missileData.indicatorUI.StopTracking();
 
-missileData.targetSector.ResolveCrash();
+SectorHandler sector = missileData.targetSector;
+        sector.ResolveCrash();
 
-if (missileData.targetSector.currentState == SectorState.NeedsAmbulance ||
-    missileData.targetSector.currentState == SectorState.Lost)
+if (sector.currentState == SectorState.NeedsAmbulance ||
+    sector.currentState == SectorState.Lost)
 {
     missileData.targetSector.PlayCrashSequenceThenSmoke();
 }
@@ -190,10 +195,14 @@ if (missileData.targetSector.currentState == SectorState.Lost)
     }
 
     public void StartAmbulanceProcess(SectorHandler sector)
-    {
-        StartCoroutine(AmbulanceRoutine(sector));
-    }
+{
+    SectorState requestedState = sector.currentState;
 
+    sector.SetState(SectorState.AmbulanceWorking);
+    sector.StartStateTimer(ambulanceProcessTime);
+
+    StartCoroutine(AmbulanceRoutine(sector, requestedState));
+}
 private IEnumerator SmokeClearRoutine(SectorHandler sector)
 {
     yield return new WaitForSeconds(smokeClearTime);
@@ -205,30 +214,23 @@ private IEnumerator SmokeClearRoutine(SectorHandler sector)
         Debug.Log(sector.sectorName + " smoke cleared. Ready for release.");
     }
 }
-    private IEnumerator AmbulanceRoutine(SectorHandler sector)
+ private IEnumerator AmbulanceRoutine(SectorHandler sector, SectorState requestedState)
+{
+    Debug.Log("Ambulance dispatched to " + sector.sectorName);
+
+    if (requestedState == SectorState.NeedsAmbulanceCheck)
     {
-        SectorState initialState = sector.currentState;
-
-        Debug.Log("Ambulance dispatched to " + sector.sectorName);
-
-        if (initialState == SectorState.NeedsAmbulanceCheck)
-        {
-            yield return new WaitForSeconds(2f);
-            sector.SetReadyForRelease();
-            Debug.Log(sector.sectorName + " ambulance check complete. Ready for release.");
-        }
-        else if (initialState == SectorState.NeedsAmbulance)
-        {
-            yield return new WaitForSeconds(2f);
-            yield return new WaitForSeconds(ambulanceRecoveryDelay);
-
-            if (sector.currentState == SectorState.NeedsAmbulance)
-            {
-                sector.SetReadyForRelease();
-                Debug.Log(sector.sectorName + " ambulance finished. Ready for release.");
-            }
-        }
+        yield return new WaitForSeconds(ambulanceProcessTime);
+        sector.SetReadyForRelease();
+        Debug.Log(sector.sectorName + " ambulance check complete. Ready for release.");
     }
+    else if (requestedState == SectorState.NeedsAmbulance)
+    {
+        yield return new WaitForSeconds(ambulanceProcessTime);
+        sector.SetReadyForRelease();
+        Debug.Log(sector.sectorName + " ambulance finished. Ready for release.");
+    }
+}
 
     private void TriggerGameOver()
     {

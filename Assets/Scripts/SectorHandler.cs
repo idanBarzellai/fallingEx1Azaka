@@ -11,6 +11,7 @@ public enum SectorState
     Smoked,                  // alerted + intercepted
     WaitingForRelease,       // smoke cleared or ambulance finished, ready for release
     NeedsAmbulanceCheck,     // not alerted + intercepted
+    AmbulanceWorking,
     NeedsAmbulance,          // alerted + crashed
     Damaged,                 // optional visual/result state if you want to keep it
     Lost                     // not alerted + crashed
@@ -40,6 +41,7 @@ public class SectorHandler : MonoBehaviour
     public Color smokedColor = Color.gray;
     public Color waitingForReleaseColor = Color.cyan;
     public Color needsAmbulanceCheckColor = new Color(1f, 0.5f, 0f);
+    public Color ambulanceWorkingColor = new Color(0.3f, 1f, 0.3f);
     public Color needsAmbulanceColor = Color.red;
     public Color lostColor = Color.black;
 
@@ -53,6 +55,11 @@ public int smokeCloudCount = 6;
 public float smokeScatterRadius = 80f;
 public float smokeClearAnimationDuration = 0.8f;
 
+[Header("State Timer UI")]
+public Image stateTimerImage;
+
+private Coroutine stateTimerRoutine;
+
     private Coroutine flickerRoutine;
     private Coroutine activeVfxRoutine;
 
@@ -61,6 +68,7 @@ private readonly List<GameObject> activeSmokeInstances = new List<GameObject>();
     {
         AutoAssignReferences();
         UpdateVisual();
+        HideStateTimer();
     }
 
     private void AutoAssignReferences()
@@ -87,6 +95,13 @@ private readonly List<GameObject> activeSmokeInstances = new List<GameObject>();
 
         if (vfxAnchor != null)
             vfxAnchor.SetAsLastSibling();
+
+            if (stateTimerImage == null)
+{
+    Transform timer = transform.Find("StateTimer");
+    if (timer != null)
+        stateTimerImage = timer.GetComponent<Image>();
+}
     }
 
     public void HandleTool(ToolType toolType)
@@ -191,10 +206,15 @@ private readonly List<GameObject> activeSmokeInstances = new List<GameObject>();
 }
 
     public void SetState(SectorState newState)
+{
+    if (currentState != newState)
     {
-        currentState = newState;
-        UpdateVisual();
+        StopStateTimer();
     }
+
+    currentState = newState;
+    UpdateVisual();
+}
 
     public void PlayInterceptSmokeSequence()
     {
@@ -402,6 +422,9 @@ public IEnumerator ClearSmokeWithAnimation()
             case SectorState.NeedsAmbulanceCheck:
                 targetColor = needsAmbulanceCheckColor;
                 break;
+                case SectorState.AmbulanceWorking:
+    targetColor = ambulanceWorkingColor;
+    break;
             case SectorState.NeedsAmbulance:
                 targetColor = needsAmbulanceColor;
                 break;
@@ -414,4 +437,68 @@ public IEnumerator ClearSmokeWithAnimation()
         targetColor.a = currentAlpha <= 0f ? 1f : currentAlpha;
         baseImage.color = targetColor;
     }
+
+    public void ShowStateTimer(float normalizedValue = 1f)
+{
+    if (stateTimerImage == null) return;
+
+    stateTimerImage.gameObject.SetActive(true);
+    stateTimerImage.fillAmount = Mathf.Clamp01(normalizedValue);
+}
+
+public void HideStateTimer()
+{
+    if (stateTimerImage == null) return;
+
+    stateTimerImage.gameObject.SetActive(false);
+}
+
+public void StartStateTimer(float duration, System.Action onComplete = null)
+{
+    if (stateTimerRoutine != null)
+        StopCoroutine(stateTimerRoutine);
+
+    stateTimerRoutine = StartCoroutine(StateTimerRoutine(duration, onComplete));
+}
+
+public void StopStateTimer()
+{
+    if (stateTimerRoutine != null)
+    {
+        StopCoroutine(stateTimerRoutine);
+        stateTimerRoutine = null;
+    }
+
+    HideStateTimer();
+}
+
+private IEnumerator StateTimerRoutine(float duration, System.Action onComplete)
+{
+    if (duration <= 0f)
+    {
+        HideStateTimer();
+        onComplete?.Invoke();
+        yield break;
+    }
+
+    ShowStateTimer(1f);
+
+    float elapsed = 0f;
+
+    while (elapsed < duration)
+    {
+        elapsed += Time.deltaTime;
+
+        if (stateTimerImage != null)
+        {
+            stateTimerImage.fillAmount = 1f - Mathf.Clamp01(elapsed / duration);
+        }
+
+        yield return null;
+    }
+
+    HideStateTimer();
+    stateTimerRoutine = null;
+    onComplete?.Invoke();
+}
 }
