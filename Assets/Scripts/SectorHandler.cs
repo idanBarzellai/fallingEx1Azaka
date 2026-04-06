@@ -50,7 +50,7 @@ public class SectorHandler : MonoBehaviour
 
     [Header("Smoke VFX")]
 public int smokeCloudCount = 6;
-public float smokeScatterRadius = 70f;
+public float smokeScatterRadius = 80f;
 public float smokeClearAnimationDuration = 0.8f;
 
     private Coroutine flickerRoutine;
@@ -270,7 +270,8 @@ private void SpawnSmoke()
         rt.anchorMax = new Vector2(0.5f, 0.5f);
         rt.pivot = new Vector2(0.5f, 0.5f);
         rt.anchoredPosition = anchoredPos;
-        rt.localScale = Vector3.one;
+rt.localScale = Vector3.one * Random.Range(0.8f, 1.3f);
+rt.localRotation = Quaternion.Euler(0, 0, Random.Range(0f, 360f));
         rt.SetAsLastSibling();
     }
 
@@ -293,7 +294,7 @@ public IEnumerator ClearSmokeWithAnimation()
         if (smoke == null)
             continue;
 
-        Animator animator = smoke.GetComponent<Animator>();
+        Animator animator = smoke.GetComponentInChildren<Animator>();
         if (animator != null)
         {
             animator.SetBool("Clear", true);
@@ -327,6 +328,7 @@ public IEnumerator ClearSmokeWithAnimation()
         {
             Destroy(child);
         }
+        activeSmokeInstances.Clear();
     }
 
     private void StartFlicker()
