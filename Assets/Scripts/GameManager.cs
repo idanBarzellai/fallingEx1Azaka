@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
+
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
@@ -24,7 +25,8 @@ public class GameManager : MonoBehaviour
     public Rect visibleCameraRect = new Rect(-540f, -960f, 1080f, 1920f);
 
     [Header("UI")]
-    public TMP_Text gameStateText;
+    public TMP_Text crisisAvoidedCounterText;
+    private int crisisAvoidedCount = 0;
     public TMP_Text livesText;
     public TMP_Text loseReasonText;
 
@@ -44,6 +46,9 @@ public class GameManager : MonoBehaviour
     [Header("Penalty Timers")]
     public float ambulanceTooLateInterval = 10f;
     public float releaseNeglectInterval = 10f;
+
+
+
 
     [SerializeField] private float minLaunchDelay = 3.5f;
     [SerializeField] private float maxLaunchDelay = 6.5f;
@@ -70,7 +75,7 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         currentLives = startingLives;
-        RefreshLivesUI();
+        RefreshUItext();
 
         if (loseReasonText != null)
             loseReasonText.text = "";
@@ -298,7 +303,7 @@ private void OnMissileTapped(MissileEventData missileData)
             return;
 
         currentLives--;
-        RefreshLivesUI();
+        RefreshUItext();
         ShowLoseReason(reason);
 
         Debug.Log("Lost life: " + reason + " | Lives left: " + currentLives);
@@ -306,11 +311,29 @@ private void OnMissileTapped(MissileEventData missileData)
         if (currentLives <= 0)
             TriggerGameOver(reason);
     }
+     public void CrisisAvoided()
+    {
+        if (gameOver)
+            return;
 
-    private void RefreshLivesUI()
+        crisisAvoidedCount++;
+        RefreshUItext();
+
+        Debug.Log("Crisis avoided count updated");
+    }
+
+    
+
+
+
+
+    private void RefreshUItext()
     {
         if (livesText != null)
             livesText.text = "Lives: " + currentLives;
+
+        if (crisisAvoidedCounterText != null)
+            crisisAvoidedCounterText.text = "Crisis Avoided: " + crisisAvoidedCount;
     }
 
     private void ShowLoseReason(string reason)
@@ -361,8 +384,8 @@ private void OnMissileTapped(MissileEventData missileData)
             sector.StopRepeatingStateTimer();
         }
 
-        if (gameStateText != null)
-            gameStateText.text = "GAME OVER";
+        if (livesText != null)
+            livesText.text = "GAME OVER";
 
         if (loseReasonText != null)
             loseReasonText.text = reason;

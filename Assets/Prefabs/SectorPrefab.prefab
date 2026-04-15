@@ -72,15 +72,15 @@ MonoBehaviour:
   vfxAnchor: {fileID: 0}
   smokePrefab: {fileID: 3864389361415077567, guid: 1f7049f33ae8589448f4abde831f8a89, type: 3}
   explosionPrefab: {fileID: 6167113499954887098, guid: f47e4caada1dad44bb8be9df39f8999a, type: 3}
-  idleColor: {r: 1, g: 1, b: 1, a: 1}
-  incomingColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  alertedIncomingColor: {r: 1, g: 0.6, b: 0.2, a: 1}
-  smokedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-  waitingForReleaseColor: {r: 0.2581474, g: 1, b: 0.023584902, a: 1}
-  needsAmbulanceCheckColor: {r: 1, g: 0, b: 0, a: 1}
-  ambulanceWorkingColor: {r: 1, g: 0.4946618, b: 0.4292453, a: 1}
-  needsAmbulanceColor: {r: 1, g: 0, b: 0, a: 1}
-  lostColor: {r: 0, g: 0, b: 0, a: 1}
+  idleColor: {r: 1, g: 1, b: 1, a: 0}
+  incomingColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 0.50980395}
+  alertedIncomingColor: {r: 1, g: 0.6, b: 0.2, a: 0.5176471}
+  smokedColor: {r: 0.5, g: 0.5, b: 0.5, a: 0.7176471}
+  waitingForReleaseColor: {r: 0.2581474, g: 1, b: 0.023584902, a: 0.5019608}
+  needsAmbulanceCheckColor: {r: 1, g: 0, b: 0, a: 0.69411767}
+  ambulanceWorkingColor: {r: 1, g: 0.4946618, b: 0.4292453, a: 0.69411767}
+  needsAmbulanceColor: {r: 1, g: 0, b: 0, a: 0.7176471}
+  lostColor: {r: 0, g: 0, b: 0, a: 0.5529412}
   crashExplosionCount: 6
   timeBetweenCrashExplosions: 0.1
   crashExplosionRadius: 150
@@ -91,6 +91,7 @@ MonoBehaviour:
   alertIconSprite: {fileID: 21300000, guid: df047e167675f2648a97b12c7a3c1739, type: 3}
   releaseIconSprite: {fileID: 21300000, guid: b238a855a04f9a14e90923f5bff9f5bd, type: 3}
   ambulanceIconSprite: {fileID: 21300000, guid: 4e2c43fb63c73f94485ca12504df7ccd, type: 3}
+  confettiPrefab: {fileID: 0}
   fadedHintAlpha: 0.35
   activeTimerAlpha: 0.95
 --- !u!1 &4434592650894215718
@@ -261,7 +262,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1

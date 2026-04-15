@@ -59,6 +59,9 @@ public class SectorHandler : MonoBehaviour
     public Sprite releaseIconSprite;
     public Sprite ambulanceIconSprite;
 
+        [Header("Release Confetti")]
+    public ParticleSystem confettiPrefab;
+
     [Range(0f, 1f)] public float fadedHintAlpha = 0.35f;
     [Range(0f, 1f)] public float activeTimerAlpha = 0.95f;
 
@@ -66,12 +69,26 @@ public class SectorHandler : MonoBehaviour
     private Coroutine repeatingStateTimerRoutine;
     private Coroutine flickerRoutine;
     private Coroutine activeVfxRoutine;
+    private Coroutine timerPulseRoutine;
+    private Coroutine timerBreathingRoutine;
+    private Coroutine timerClearRoutine;
+
+    private Vector3 timerRestScale = Vector3.one;
+
+    private const string TimerClearVObjectName = "ClearVAnimation";
+    private const float clearVDrawDuration = 0.16f;
+    private const float clearVStaggerDelay = 0.06f;
+    private const float clearVHoldDuration = 0.28f;
+    private static Sprite cachedWhiteSprite;
 
     private readonly List<GameObject> activeSmokeInstances = new List<GameObject>();
 
     private void Awake()
     {
         AutoAssignReferences();
+        if (stateTimerImage != null)
+            timerRestScale = stateTimerImage.rectTransform.localScale;
+
         UpdateVisual();
         HideStateTimer();
     }
@@ -150,6 +167,9 @@ public class SectorHandler : MonoBehaviour
             StopRepeatingStateTimer();
             SetState(SectorState.Idle);
             Debug.Log(sectorName + " released back to idle.");
+            GameManager.Instance?.CrisisAvoided();
+        StartCoroutine(PlayConfettiBurst());
+
             return;
         }
 
@@ -166,6 +186,15 @@ public class SectorHandler : MonoBehaviour
         }
 
         Debug.Log("Release cannot be applied to " + sectorName + " while state is " + currentState);
+    }
+
+    private IEnumerator PlayConfettiBurst()
+    {
+        
+        if (confettiPrefab == null)
+            yield break;
+
+            confettiPrefab.Play();
     }
 
     private void TryApplyAmbulance()
@@ -214,6 +243,7 @@ public class SectorHandler : MonoBehaviour
     public void SetReadyForRelease()
     {
         SetState(SectorState.WaitingForRelease);
+        PlayReleasePromptAnimation();
     }
 
     public void SetState(SectorState newState)
@@ -453,8 +483,8 @@ private void SpawnSmokeAtPoint(Vector2 worldAnchoredPosition, RectTransform sour
             case SectorState.Lost: targetColor = lostColor; break;
         }
 
-        float currentAlpha = baseImage.color.a;
-        targetColor.a = currentAlpha <= 0f ? 1f : currentAlpha;
+        // float currentAlpha = baseImage.color.a;
+        // targetColor.a = currentAlpha <= 0f ? 0.5f : currentAlpha;
         baseImage.color = targetColor;
     }
 
@@ -467,24 +497,29 @@ private void SpawnSmokeAtPoint(Vector2 worldAnchoredPosition, RectTransform sour
         stateTimerImage.sprite = alertIconSprite;
         stateTimerImage.type = Image.Type.Simple;
 
-        Color c = stateTimerImage.color;
-        c.a = fadedHintAlpha;
-        stateTimerImage.color = c;
+        // Color c = stateTimerImage.color;
+        // c.a = fadedHintAlpha;
+        // stateTimerImage.color = c;
 
         stateTimerImage.transform.SetAsLastSibling();
+        StartTimerBreathing();
     }
 
-    private void PrepareTimerIcon(Sprite icon, float alpha)
+    private void PrepareTimerIcon(Sprite icon, float alpha, Image.Type imageType = Image.Type.Filled)
     {
         if (stateTimerImage == null || icon == null)
             return;
 
         stateTimerImage.gameObject.SetActive(true);
         stateTimerImage.sprite = icon;
-        stateTimerImage.type = Image.Type.Filled;
-        stateTimerImage.fillMethod = Image.FillMethod.Radial360;
-        stateTimerImage.fillOrigin = 2;
-        stateTimerImage.fillClockwise = false;
+        stateTimerImage.type = imageType;
+
+        if (imageType == Image.Type.Filled)
+        {
+            stateTimerImage.fillMethod = Image.FillMethod.Radial360;
+            stateTimerImage.fillOrigin = 2;
+            stateTimerImage.fillClockwise = false;
+        }
 
         Color c = stateTimerImage.color;
         c.a = alpha;
@@ -493,12 +528,235 @@ private void SpawnSmokeAtPoint(Vector2 worldAnchoredPosition, RectTransform sour
         stateTimerImage.transform.SetAsLastSibling();
     }
 
+    private void PlayReleasePromptAnimation()
+    {
+        if (stateTimerImage == null || releaseIconSprite == null)
+            return;
+
+        if (timerPulseRoutine != null)
+            StopCoroutine(timerPulseRoutine);
+
+        timerPulseRoutine = StartCoroutine(ReleasePromptRoutine());
+    }
+
+    private void StartTimerBreathing()
+    {
+        if (stateTimerImage == null)
+            return;
+
+        if (timerBreathingRoutine != null)
+            return;
+
+        timerBreathingRoutine = StartCoroutine(TimerBreathingRoutine());
+    }
+
+    private IEnumerator ReleasePromptRoutine()
+    {
+        PrepareTimerIcon(releaseIconSprite, activeTimerAlpha, Image.Type.Simple);
+
+        if (stateTimerImage == null)
+        {
+            timerPulseRoutine = null;
+            yield break;
+        }
+
+        RectTransform timerRect = stateTimerImage.rectTransform;
+        Vector3 baseScale = timerRestScale;
+        Vector3 startScale = baseScale * 0.72f;
+        Vector3 peakScale = baseScale * 1.2f;
+
+        yield return ScaleTimerRect(timerRect, startScale, peakScale, 0.16f);
+        yield return ScaleTimerRect(timerRect, peakScale, baseScale, 0.14f);
+
+        timerPulseRoutine = null;
+        StartTimerBreathing();
+    }
+
+    private IEnumerator TimerBreathingRoutine()
+    {
+        if (stateTimerImage == null)
+        {
+            timerBreathingRoutine = null;
+            yield break;
+        }
+
+        RectTransform timerRect = stateTimerImage.rectTransform;
+        Vector3 baseScale = timerRestScale;
+        const float minScaleFactor = 0.96f;
+        const float maxScaleFactor = 1.04f;
+        const float cycleDuration = 1.2f;
+
+        while (true)
+        {
+            float cycle = Mathf.PingPong(Time.time / cycleDuration, 1f);
+            float scaleFactor = Mathf.Lerp(minScaleFactor, maxScaleFactor, cycle);
+            timerRect.localScale = baseScale * scaleFactor;
+            yield return null;
+        }
+    }
+
+    private IEnumerator ScaleTimerRect(RectTransform timerRect, Vector3 fromScale, Vector3 toScale, float duration)
+    {
+        if (timerRect == null)
+            yield break;
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            timerRect.localScale = Vector3.Lerp(fromScale, toScale, t);
+            yield return null;
+        }
+
+        timerRect.localScale = toScale;
+    }
+
+    private void StopTimerAnimations()
+    {
+        if (timerPulseRoutine != null)
+        {
+            StopCoroutine(timerPulseRoutine);
+            timerPulseRoutine = null;
+        }
+
+        if (timerBreathingRoutine != null)
+        {
+            StopCoroutine(timerBreathingRoutine);
+            timerBreathingRoutine = null;
+        }
+
+        if (stateTimerImage != null)
+            stateTimerImage.rectTransform.localScale = timerRestScale;
+    }
+
     public void HideStateTimer()
     {
         if (stateTimerImage == null)
             return;
 
+        StopClearAnimation();
+
+        StopTimerAnimations();
         stateTimerImage.gameObject.SetActive(false);
+    }
+
+    private void StopClearAnimation()
+    {
+        if (timerClearRoutine != null)
+        {
+            StopCoroutine(timerClearRoutine);
+            timerClearRoutine = null;
+        }
+
+        DestroyClearVObject();
+    }
+
+    private IEnumerator PlayClearVAnimationThenHide()
+    {
+        if (stateTimerImage == null)
+            yield break;
+
+        StopTimerAnimations();
+        DestroyClearVObject();
+
+        stateTimerImage.gameObject.SetActive(true);
+        stateTimerImage.type = Image.Type.Simple;
+
+        Color timerColor = stateTimerImage.color;
+        timerColor.a = 0f;
+        stateTimerImage.color = timerColor;
+
+        RectTransform hostRect = stateTimerImage.rectTransform;
+        float minSize = Mathf.Min(hostRect.rect.width, hostRect.rect.height);
+        float armLength = Mathf.Max(16f, minSize * 0.46f);
+        float armThickness = Mathf.Max(3f, minSize * 0.08f);
+
+        GameObject clearVRoot = new GameObject(TimerClearVObjectName, typeof(RectTransform));
+        clearVRoot.transform.SetParent(stateTimerImage.transform, false);
+
+        RectTransform rootRect = clearVRoot.GetComponent<RectTransform>();
+        rootRect.anchorMin = new Vector2(0.5f, 0.5f);
+        rootRect.anchorMax = new Vector2(0.5f, 0.5f);
+        rootRect.pivot = new Vector2(0.5f, 0.5f);
+        rootRect.anchoredPosition = Vector2.zero;
+        rootRect.sizeDelta = Vector2.zero;
+
+        RectTransform leftArm = CreateClearVArm(clearVRoot.transform, armLength, armThickness, 34f);
+        RectTransform rightArm = CreateClearVArm(clearVRoot.transform, armLength, armThickness, -34f);
+
+        yield return ScaleRectY(leftArm, 0f, 1f, clearVDrawDuration);
+        yield return ScaleRectY(rightArm, 0f, 1f, clearVDrawDuration - clearVStaggerDelay);
+        yield return new WaitForSeconds(clearVHoldDuration);
+
+        DestroyClearVObject();
+        stateTimerImage.gameObject.SetActive(false);
+    }
+
+    private RectTransform CreateClearVArm(Transform parent, float armLength, float armThickness, float rotationZ)
+    {
+        GameObject arm = new GameObject("Arm", typeof(RectTransform), typeof(Image));
+        arm.transform.SetParent(parent, false);
+
+        RectTransform armRect = arm.GetComponent<RectTransform>();
+        armRect.anchorMin = new Vector2(0.5f, 0.5f);
+        armRect.anchorMax = new Vector2(0.5f, 0.5f);
+        armRect.pivot = new Vector2(0.5f, 1f);
+        armRect.anchoredPosition = new Vector2(0f, armLength * 0.35f);
+        armRect.sizeDelta = new Vector2(armThickness, armLength);
+        armRect.localRotation = Quaternion.Euler(0f, 0f, rotationZ);
+        armRect.localScale = new Vector3(1f, 0f, 1f);
+
+        Image armImage = arm.GetComponent<Image>();
+        armImage.sprite = GetWhiteSprite();
+        armImage.type = Image.Type.Simple;
+        armImage.raycastTarget = false;
+        armImage.color = new Color(0.45f, 1f, 0.45f, activeTimerAlpha);
+
+        return armRect;
+    }
+
+    private static Sprite GetWhiteSprite()
+    {
+        if (cachedWhiteSprite != null)
+            return cachedWhiteSprite;
+
+        Texture2D texture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+        texture.SetPixel(0, 0, Color.white);
+        texture.Apply();
+
+        cachedWhiteSprite = Sprite.Create(texture, new Rect(0f, 0f, 1f, 1f), new Vector2(0.5f, 0.5f));
+        return cachedWhiteSprite;
+    }
+
+    private IEnumerator ScaleRectY(RectTransform rect, float from, float to, float duration)
+    {
+        if (rect == null)
+            yield break;
+
+        float clampedDuration = Mathf.Max(0.01f, duration);
+        float elapsed = 0f;
+
+        while (elapsed < clampedDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / clampedDuration);
+            float y = Mathf.Lerp(from, to, t);
+            rect.localScale = new Vector3(1f, y, 1f);
+            yield return null;
+        }
+
+        rect.localScale = new Vector3(1f, to, 1f);
+    }
+
+    private void DestroyClearVObject()
+    {
+        if (stateTimerImage == null)
+            return;
+
+        Transform clearV = stateTimerImage.transform.Find(TimerClearVObjectName);
+        if (clearV != null)
+            Destroy(clearV.gameObject);
     }
 
     public void StartIconCountdown(float duration, Sprite icon, System.Action onComplete = null)
@@ -551,12 +809,15 @@ private void SpawnSmokeAtPoint(Vector2 worldAnchoredPosition, RectTransform sour
     {
         if (duration <= 0f)
         {
-            HideStateTimer();
+            timerClearRoutine = StartCoroutine(PlayClearVAnimationThenHide());
+            yield return timerClearRoutine;
+            timerClearRoutine = null;
             onComplete?.Invoke();
             yield break;
         }
 
         PrepareTimerIcon(icon, activeTimerAlpha);
+        StartTimerBreathing();
         stateTimerImage.fillAmount = 1f;
 
         float elapsed = 0f;
@@ -567,7 +828,9 @@ private void SpawnSmokeAtPoint(Vector2 worldAnchoredPosition, RectTransform sour
             yield return null;
         }
 
-        HideStateTimer();
+        timerClearRoutine = StartCoroutine(PlayClearVAnimationThenHide());
+        yield return timerClearRoutine;
+        timerClearRoutine = null;
         stateTimerRoutine = null;
         onComplete?.Invoke();
     }
@@ -576,12 +839,15 @@ private void SpawnSmokeAtPoint(Vector2 worldAnchoredPosition, RectTransform sour
     {
         if (duration <= 0f)
         {
-            HideStateTimer();
+            timerClearRoutine = StartCoroutine(PlayClearVAnimationThenHide());
+            yield return timerClearRoutine;
+            timerClearRoutine = null;
             onComplete?.Invoke();
             yield break;
         }
 
         PrepareTimerIcon(icon, activeTimerAlpha);
+        StartTimerBreathing();
         stateTimerImage.fillAmount = 0f;
 
         float elapsed = 0f;
@@ -592,7 +858,9 @@ private void SpawnSmokeAtPoint(Vector2 worldAnchoredPosition, RectTransform sour
             yield return null;
         }
 
-        HideStateTimer();
+        timerClearRoutine = StartCoroutine(PlayClearVAnimationThenHide());
+        yield return timerClearRoutine;
+        timerClearRoutine = null;
         stateTimerRoutine = null;
         onComplete?.Invoke();
     }
@@ -602,6 +870,7 @@ private void SpawnSmokeAtPoint(Vector2 worldAnchoredPosition, RectTransform sour
         while (true)
         {
             PrepareTimerIcon(icon, activeTimerAlpha);
+            StartTimerBreathing();
             stateTimerImage.fillAmount = 1f;
 
             float elapsed = 0f;
@@ -621,6 +890,7 @@ private void SpawnSmokeAtPoint(Vector2 worldAnchoredPosition, RectTransform sour
         while (true)
         {
             PrepareTimerIcon(icon, activeTimerAlpha);
+            StartTimerBreathing();
             stateTimerImage.fillAmount = 0f;
 
             float elapsed = 0f;
