@@ -93,6 +93,7 @@ public class GameManager : MonoBehaviour
         currentLives = startingLives;
         crisisAvoidedHighScoreCount = PlayerPrefs.GetInt("HighScore", 0);
         RefreshUItext();
+        tvVideoPlayer.loopPointReached +=  VideoStopped;
 
         if (loseReasonText != null)
             loseReasonText.text = "Until today " + crisisAvoidedHighScoreCount + " crises avoided.";
@@ -382,7 +383,6 @@ private void OnMissileTapped(MissileEventData missileData)
         yield return new WaitForSeconds(loseReasonMessageDuration);
 
         if (!gameOver && loseReasonText != null){
-        tvVideoStaticImage.gameObject.SetActive(true);
             
             string status = currentLives == 5 ? "No crashes so far" : currentLives == 4 ? "An event occured in the" + sectorName : "" + (startingLives - currentLives) + "events occured all around the country";
 
@@ -422,7 +422,7 @@ private void OnMissileTapped(MissileEventData missileData)
             livesText.text = "GAME OVER";
 
         if (loseReasonText != null)
-            loseReasonText.text = reason;
+            loseReasonText.text = "No one wins at war.\n" + reason + "\nToday " + crisisAvoidedCount + " crises avoided.";
 
             if (gameOverPanel != null)
             {
@@ -458,6 +458,12 @@ PlayVideo();
         if (tvVideoPlayer != null)
             tvVideoPlayer.Play();
 
+    }
+
+    private void VideoStopped(VideoPlayer vp)
+    {
+        if (tvVideoStaticImage != null)
+            tvVideoStaticImage.GetComponent<UIFade>().FadeIn();
     }
     private void ScaleAndCenterUI(GameObject uiElement)
     {
