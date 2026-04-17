@@ -26,6 +26,8 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioClip gameOverSfx;
     [SerializeField] private AudioClip buttonClickSfx;
     [SerializeField] private AudioClip invalidActionSfx;
+    [SerializeField] private AudioClip validActionSfx;
+
     [SerializeField] private AudioClip vibrateSfx;
 
     [SerializeField] private AudioClip[] tvTalkSfx;
@@ -153,11 +155,12 @@ public class AudioManager : MonoBehaviour
     } 
         
     public void PlayAmbulance() => PlaySfx(ambulanceSfx);
-    public void PlayRelease() => PlaySfx(releaseSfx);
+    public void PlayRelease() => PlaySfx(releaseSfx, 0.7f);
     public void PlayLoseLife() => PlaySfx(loseLifeSfx);
     public void PlayGameOver() => PlaySfx(gameOverSfx);
     public void PlayButtonClick() => PlaySfx(buttonClickSfx);
     public void PlayInvalidAction() => PlaySfx(invalidActionSfx);
+    public void PlayValidAction() => PlaySfx(validActionSfx);
     public void PlayVibrate() => PlaySfx(vibrateSfx);
     public void PlayMissileImpact()
     {

@@ -274,8 +274,11 @@ private void OnMissileTapped(MissileEventData missileData)
         sector.StopRepeatingStateTimer();
         sector.SetState(SectorState.AmbulanceWorking);
 
-        if (AudioManager.Instance != null)
+        if (AudioManager.Instance != null){
             AudioManager.Instance.PlayAmbulance();
+            AudioManager.Instance.PlayValidAction();
+
+        }
 
         // Per your rule: AmbulanceWorking uses RELEASE icon filling 0 -> 1
         sector.StartIconFillUp(ambulanceProcessTime, sector.releaseIconSprite);

@@ -162,7 +162,11 @@ public class SectorHandler : MonoBehaviour
     {
         if (currentState == SectorState.WaitingForRelease)
         {
+            if(AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlayValidAction();
             AudioManager.Instance.PlayRelease();
+            }
             StopAllSectorVfx();
             StopStateTimer();
             StopRepeatingStateTimer();

@@ -952,6 +952,7 @@ MonoBehaviour:
   gameOverSfx: {fileID: 8300000, guid: ffb7b84b0fe552d469c704e494060112, type: 3}
   buttonClickSfx: {fileID: 8300000, guid: 8c20a93c31948b2498297e650d4de6d0, type: 3}
   invalidActionSfx: {fileID: 8300000, guid: a767b872d25fe6646b489459700d545c, type: 3}
+  validActionSfx: {fileID: 8300000, guid: 3b266b197a09550408a6dcceb3ffd7d0, type: 3}
   vibrateSfx: {fileID: 8300000, guid: 704f2c86384bf6e488a1d31d189ee427, type: 3}
   tvTalkSfx:
   - {fileID: 8300000, guid: b45265beb8733dd43a20d81b5a425cc6, type: 3}

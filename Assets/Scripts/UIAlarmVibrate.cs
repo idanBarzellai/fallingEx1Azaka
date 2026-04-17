@@ -46,6 +46,8 @@ public class UIAlarmVibrate : MonoBehaviour
                 if (AudioManager.Instance != null)
                     AudioManager.Instance.PlayVibrate();
 
+                    Handheld.Vibrate();
+
                 playedVibrateSfxThisPulse = true;
             }
 
