@@ -88,9 +88,9 @@ MonoBehaviour:
   smokeScatterRadius: 150
   smokeClearAnimationDuration: 2
   stateTimerImage: {fileID: 4228861784290904117}
-  alertIconSprite: {fileID: 21300000, guid: df047e167675f2648a97b12c7a3c1739, type: 3}
-  releaseIconSprite: {fileID: 21300000, guid: b238a855a04f9a14e90923f5bff9f5bd, type: 3}
-  ambulanceIconSprite: {fileID: 21300000, guid: 4e2c43fb63c73f94485ca12504df7ccd, type: 3}
+  alertIconSprite: {fileID: 21300000, guid: 3c8217137903a9643999ab0a95b747d9, type: 3}
+  releaseIconSprite: {fileID: 21300000, guid: 9d70937909c2c1e4d90eeaf13dddc08c, type: 3}
+  ambulanceIconSprite: {fileID: 21300000, guid: 01a3669b05cd36f4880966843eef575d, type: 3}
   confettiPrefab: {fileID: 0}
   fadedHintAlpha: 0.35
   activeTimerAlpha: 0.95
@@ -164,7 +164,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 120, y: 120}
+  m_SizeDelta: {x: 180, y: 18}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3170127372005731144
 CanvasRenderer:

@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.Video;
 
 
 public class GameManager : MonoBehaviour
@@ -26,9 +28,14 @@ public class GameManager : MonoBehaviour
 
     [Header("UI")]
     public TMP_Text crisisAvoidedCounterText;
+    public TMP_Text highScoreText;
     private int crisisAvoidedCount = 0;
+    private int crisisAvoidedHighScoreCount = 0;
     public TMP_Text livesText;
     public TMP_Text loseReasonText;
+    public Button resetButton;
+    public Image tvVideoStaticImage;
+    public VideoPlayer tvVideoPlayer;
 
     [Header("Lives")]
     public int startingLives = 5;
@@ -75,10 +82,11 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         currentLives = startingLives;
+        crisisAvoidedHighScoreCount = PlayerPrefs.GetInt("HighScore", 0);
         RefreshUItext();
 
         if (loseReasonText != null)
-            loseReasonText.text = "";
+            loseReasonText.text = "Until today " + crisisAvoidedHighScoreCount + " crises avoided.";
 
         StartCoroutine(GameLoop());
     }
@@ -278,7 +286,7 @@ private void OnMissileTapped(MissileEventData missileData)
             if (sector.currentState == SectorState.NeedsAmbulance ||
                 sector.currentState == SectorState.NeedsAmbulanceCheck)
             {
-                LoseLife("Ambulance was too late in " + sector.sectorName + ".");
+                LoseLife("Ambulance was too late in " + sector.sectorName + ".", sector.sectorName.ToString()   );
             }
         });
     }
@@ -292,19 +300,19 @@ private void OnMissileTapped(MissileEventData missileData)
         {
             if (sector.currentState == SectorState.WaitingForRelease)
             {
-                LoseLife("Citizens were not released in time in " + sector.sectorName + ".");
+                LoseLife("Citizens were not released in time in " + sector.sectorName + ".", sector.sectorName.ToString());
             }
         });
     }
 
-    public void LoseLife(string reason)
+    public void LoseLife(string reason, string sectorName)
     {
         if (gameOver)
             return;
 
         currentLives--;
         RefreshUItext();
-        ShowLoseReason(reason);
+        ShowLoseReason(reason, sectorName);
 
         Debug.Log("Lost life: " + reason + " | Lives left: " + currentLives);
 
@@ -317,6 +325,10 @@ private void OnMissileTapped(MissileEventData missileData)
             return;
 
         crisisAvoidedCount++;
+        if (crisisAvoidedCount > crisisAvoidedHighScoreCount){
+            crisisAvoidedHighScoreCount = crisisAvoidedCount;
+            PlayerPrefs.SetInt("HighScore", crisisAvoidedHighScoreCount);
+        }
         RefreshUItext();
 
         Debug.Log("Crisis avoided count updated");
@@ -334,9 +346,14 @@ private void OnMissileTapped(MissileEventData missileData)
 
         if (crisisAvoidedCounterText != null)
             crisisAvoidedCounterText.text = "Crisis Avoided: " + crisisAvoidedCount;
+
+        if (highScoreText != null)            {
+            if(crisisAvoidedHighScoreCount == 0)
+                crisisAvoidedHighScoreCount = PlayerPrefs.GetInt("HighScore", 0);
+            highScoreText.text = "High Score: " + crisisAvoidedHighScoreCount;  }  
     }
 
-    private void ShowLoseReason(string reason)
+    private void ShowLoseReason(string reason, string sectorName)
     {
         if (loseReasonText == null)
             return;
@@ -344,17 +361,24 @@ private void OnMissileTapped(MissileEventData missileData)
         if (loseReasonRoutine != null)
             StopCoroutine(loseReasonRoutine);
 
-        loseReasonRoutine = StartCoroutine(ShowLoseReasonRoutine(reason));
+        loseReasonRoutine = StartCoroutine(ShowLoseReasonRoutine(reason, sectorName));
     }
 
-    private IEnumerator ShowLoseReasonRoutine(string reason)
+    private IEnumerator ShowLoseReasonRoutine(string reason, string sectorName)
     {
+        tvVideoStaticImage.gameObject.SetActive(false);
+        tvVideoPlayer.Play();
         loseReasonText.text = reason;
 
         yield return new WaitForSeconds(loseReasonMessageDuration);
 
-        if (!gameOver && loseReasonText != null)
-            loseReasonText.text = "";
+        if (!gameOver && loseReasonText != null){
+        tvVideoStaticImage.gameObject.SetActive(true);
+            
+            string status = currentLives == 5 ? "No crashes so far" : currentLives == 4 ? "" + (startingLives - currentLives) + "An event occured in " + sectorName : "" + (startingLives - currentLives) + "events occured all around the country";
+
+            loseReasonText.text = "Today " + crisisAvoidedCount + " crises avoided.\n" + status;
+        }
 
         loseReasonRoutine = null;
     }
@@ -382,6 +406,7 @@ private void OnMissileTapped(MissileEventData missileData)
             if (sector == null) continue;
             sector.StopStateTimer();
             sector.StopRepeatingStateTimer();
+            sector.SetState(SectorState.Lost);
         }
 
         if (livesText != null)
@@ -389,6 +414,11 @@ private void OnMissileTapped(MissileEventData missileData)
 
         if (loseReasonText != null)
             loseReasonText.text = reason;
+
+            if (resetButton != null)
+            {
+                resetButton.gameObject.SetActive(true);
+            }
     }
 
     private SectorHandler GetRandomSector()
@@ -440,5 +470,10 @@ private void OnMissileTapped(MissileEventData missileData)
             default:
                 return new Vector2(Random.Range(-350f, 350f), 2000f);
         }
+    }
+
+    public void ResetGame()
+    {
+        UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
     }
 }

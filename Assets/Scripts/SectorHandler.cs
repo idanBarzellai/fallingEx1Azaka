@@ -175,13 +175,13 @@ public class SectorHandler : MonoBehaviour
 
         if (currentState == SectorState.Smoked)
         {
-            GameManager.Instance?.LoseLife("Released " + sectorName + " before smoke cleared.");
+            GameManager.Instance?.LoseLife("Released " + sectorName + " before smoke cleared.", sectorName.ToString());
             return;
         }
 
         if (currentState == SectorState.AmbulanceWorking)
         {
-            GameManager.Instance?.LoseLife("Released " + sectorName + " before ambulance finished.");
+            GameManager.Instance?.LoseLife("Released " + sectorName + " before ambulance finished.", sectorName.ToString());
             return;
         }
 
