@@ -162,12 +162,13 @@ public class SectorHandler : MonoBehaviour
     {
         if (currentState == SectorState.WaitingForRelease)
         {
+            AudioManager.Instance.PlayRelease();
             StopAllSectorVfx();
             StopStateTimer();
             StopRepeatingStateTimer();
             SetState(SectorState.Idle);
             Debug.Log(sectorName + " released back to idle.");
-            GameManager.Instance?.CrisisAvoided();
+            GameManager.Instance?.CrisisAvoided(sectorName.ToString());
         StartCoroutine(PlayConfettiBurst());
 
             return;
@@ -175,12 +176,15 @@ public class SectorHandler : MonoBehaviour
 
         if (currentState == SectorState.Smoked)
         {
+            AudioManager.Instance.PlayInvalidAction();
             GameManager.Instance?.LoseLife("Released " + sectorName + " before smoke cleared.", sectorName.ToString());
             return;
         }
 
         if (currentState == SectorState.AmbulanceWorking)
         {
+            AudioManager.Instance.PlayInvalidAction();
+
             GameManager.Instance?.LoseLife("Released " + sectorName + " before ambulance finished.", sectorName.ToString());
             return;
         }

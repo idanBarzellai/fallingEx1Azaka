@@ -13,24 +13,23 @@ public class AudioManager : MonoBehaviour
     [Range(0f, 1f)] public float sfxVolume = 1f;
 
     [Header("Background Music")]
-    [SerializeField] private AudioClip mainMenuBgm;
     [SerializeField] private AudioClip gameplayBgm;
-    [SerializeField] private AudioClip gameOverBgm;
 
     [Header("General SFX")]
     [SerializeField] private AudioClip missileWarningSfx;
-    [SerializeField] private AudioClip missileLaunchSfx;
     [SerializeField] private AudioClip missileTapSfx;
-    [SerializeField] private AudioClip missileImpactSfx;
-    [SerializeField] private AudioClip smokeSfx;
+    [SerializeField] private AudioClip[] missileImpactSfxs;
     [SerializeField] private AudioClip explosionSfx;
     [SerializeField] private AudioClip ambulanceSfx;
     [SerializeField] private AudioClip releaseSfx;
     [SerializeField] private AudioClip loseLifeSfx;
     [SerializeField] private AudioClip gameOverSfx;
     [SerializeField] private AudioClip buttonClickSfx;
-    [SerializeField] private AudioClip alertPlacedSfx;
     [SerializeField] private AudioClip invalidActionSfx;
+    [SerializeField] private AudioClip vibrateSfx;
+
+    [SerializeField] private AudioClip[] tvTalkSfx;
+
 
     private void Awake()
     {
@@ -145,21 +144,36 @@ public class AudioManager : MonoBehaviour
 
     // ---- Easy named calls ----
 
-    public void PlayMainMenuBgm() => PlayBgm(mainMenuBgm);
     public void PlayGameplayBgm() => PlayBgm(gameplayBgm);
-    public void PlayGameOverBgm() => PlayBgm(gameOverBgm, true);
 
     public void PlayMissileWarning() => PlaySfx(missileWarningSfx);
-    public void PlayMissileLaunch() => PlaySfx(missileLaunchSfx);
-    public void PlayMissileTap() => PlaySfx(missileTapSfx);
-    public void PlayMissileImpact() => PlaySfx(missileImpactSfx);
-    public void PlaySmoke() => PlaySfx(smokeSfx);
-    public void PlayExplosion() => PlaySfx(explosionSfx);
+    public void PlayMissileTap() => PlaySfx(missileTapSfx, 2f);
+    public void PlayExplosion() {
+        PlaySfx(explosionSfx, 0.2f);
+    } 
+        
     public void PlayAmbulance() => PlaySfx(ambulanceSfx);
     public void PlayRelease() => PlaySfx(releaseSfx);
     public void PlayLoseLife() => PlaySfx(loseLifeSfx);
     public void PlayGameOver() => PlaySfx(gameOverSfx);
     public void PlayButtonClick() => PlaySfx(buttonClickSfx);
-    public void PlayAlertPlaced() => PlaySfx(alertPlacedSfx);
     public void PlayInvalidAction() => PlaySfx(invalidActionSfx);
+    public void PlayVibrate() => PlaySfx(vibrateSfx);
+    public void PlayMissileImpact()
+    {
+        if (missileImpactSfxs != null && missileImpactSfxs.Length > 0)
+        {
+            int index = Random.Range(0, missileImpactSfxs.Length);
+            PlaySfx(missileImpactSfxs[index]);
+        }
+    }
+
+    public void PlayRandomTvTalk()
+    {
+        if (tvTalkSfx != null && tvTalkSfx.Length > 0)
+        {
+            int index = Random.Range(0, tvTalkSfx.Length);
+            PlaySfx(tvTalkSfx[index]);
+        }
+    }
 }

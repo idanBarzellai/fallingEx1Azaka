@@ -165,8 +165,6 @@ public class GameManager : MonoBehaviour
             () => OnMissileTapped(missileData)
         );
 
-        if (AudioManager.Instance != null)
-            AudioManager.Instance.PlayMissileLaunch();
 
         if (missileData.indicatorUI != null)
             missileData.indicatorUI.BeginTracking(missile.RectTransform, visibleCameraRect);
@@ -200,8 +198,6 @@ private void OnMissileTapped(MissileEventData missileData)
         sector.PlayInterceptSmokeSequenceAt(missileHitPosition, missileLayer);
         sector.StartIconFillUp(smokeClearTime, sector.releaseIconSprite);
 
-        if (AudioManager.Instance != null)
-            AudioManager.Instance.PlaySmoke();
 
         StartCoroutine(SmokeClearRoutine(sector));
     }
@@ -360,7 +356,7 @@ private void OnMissileTapped(MissileEventData missileData)
         if (currentLives <= 0)
             TriggerGameOver(reason);
     }
-     public void CrisisAvoided()
+     public void CrisisAvoided(string sectorName)
     {
         if (gameOver)
             return;
@@ -371,6 +367,8 @@ private void OnMissileTapped(MissileEventData missileData)
             PlayerPrefs.SetInt("HighScore", crisisAvoidedHighScoreCount);
         }
         RefreshUItext();
+         ShowLoseReason("Crisis avoided in " + sectorName + "!", sectorName);
+
 
         Debug.Log("Crisis avoided count updated");
     }
@@ -429,7 +427,6 @@ private void OnMissileTapped(MissileEventData missileData)
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.PlayGameOver();
-            AudioManager.Instance.PlayGameOverBgm();
         }
 
         foreach (var missile in activeMissiles)
@@ -491,8 +488,10 @@ PlayVideo();
     private void PlayVideo()
     {
                 tvVideoStaticImage.gameObject.SetActive(false);
-        if (tvVideoPlayer != null)
+        if (tvVideoPlayer != null){
             tvVideoPlayer.Play();
+            AudioManager.Instance.PlayRandomTvTalk();
+        }
 
     }
 
@@ -610,6 +609,7 @@ PlayVideo();
 
     public void ResetGame()
     {
+        AudioManager.Instance.PlayButtonClick();
         UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
     }
 }

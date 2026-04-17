@@ -17,6 +17,7 @@ public class UIAlarmVibrate : MonoBehaviour
 
     private float timer;
     private bool isVibrating = true;
+    private bool playedVibrateSfxThisPulse;
 
     private void Awake()
     {
@@ -31,6 +32,7 @@ public class UIAlarmVibrate : MonoBehaviour
         startRot = target.localRotation;
         timer = vibrateDuration;
         isVibrating = true;
+        playedVibrateSfxThisPulse = false;
     }
 
     private void Update()
@@ -39,6 +41,14 @@ public class UIAlarmVibrate : MonoBehaviour
 
         if (isVibrating)
         {
+            if (!playedVibrateSfxThisPulse)
+            {
+                if (AudioManager.Instance != null)
+                    AudioManager.Instance.PlayVibrate();
+
+                playedVibrateSfxThisPulse = true;
+            }
+
             // Vibrate
             float wave = Mathf.Sin(Time.unscaledTime * speed);
             float z = wave * angleAmount;
@@ -60,6 +70,7 @@ public class UIAlarmVibrate : MonoBehaviour
             {
                 isVibrating = true;
                 timer = vibrateDuration;
+                playedVibrateSfxThisPulse = false;
             }
         }
     }
