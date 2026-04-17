@@ -37,9 +37,11 @@ public class GameManager : MonoBehaviour
     public Image tvVideoStaticImage;
     public VideoPlayer tvVideoPlayer;
 
+
     [Header("Lives")]
     public int startingLives = 5;
     private int currentLives;
+    public Image[] livesImages; // Assign in inspector: 0 - life1, 1 - life2, etc.
 
     [Header("Penalty UI")]
     public float loseReasonMessageDuration = 2.5f;
@@ -311,6 +313,7 @@ private void OnMissileTapped(MissileEventData missileData)
             return;
 
         currentLives--;
+        livesImages[currentLives].GetComponent<UIFade>().FadeOut();
         RefreshUItext();
         ShowLoseReason(reason, sectorName);
 
@@ -375,7 +378,7 @@ private void OnMissileTapped(MissileEventData missileData)
         if (!gameOver && loseReasonText != null){
         tvVideoStaticImage.gameObject.SetActive(true);
             
-            string status = currentLives == 5 ? "No crashes so far" : currentLives == 4 ? "" + (startingLives - currentLives) + "An event occured in " + sectorName : "" + (startingLives - currentLives) + "events occured all around the country";
+            string status = currentLives == 5 ? "No crashes so far" : currentLives == 4 ? "An event occured in the" + sectorName : "" + (startingLives - currentLives) + "events occured all around the country";
 
             loseReasonText.text = "Today " + crisisAvoidedCount + " crises avoided.\n" + status;
         }

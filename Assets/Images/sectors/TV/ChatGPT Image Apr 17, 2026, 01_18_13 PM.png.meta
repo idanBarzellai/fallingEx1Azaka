@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: fb79d8848ffbe034a8ba8822adbd4085
+guid: c61657cd448555f4982d2b8e3f391879
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 2407341818618378322
-    second: Israel_relief_location_map-blank 1_0
+      213: -1311412771449891409
+    second: ChatGPT Image Apr 17, 2026, 01_18_13 PM_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -46,7 +46,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -75,7 +75,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 1
+    textureCompression: 0
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -139,13 +139,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Israel_relief_location_map-blank 1_0
+      name: ChatGPT Image Apr 17, 2026, 01_18_13 PM_0
       rect:
         serializedVersion: 2
-        x: 0
+        x: 85
         y: 0
-        width: 1233
-        height: 2291
+        width: 905
+        height: 1469
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -154,8 +154,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 258f0bf11a8986120800000000000000
-      internalID: 2407341818618378322
+      spriteID: fa591d3580deccde0800000000000000
+      internalID: -1311412771449891409
       vertices: []
       indices: 
       edges: []
@@ -164,7 +164,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
     indices: 
@@ -174,7 +174,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Israel_relief_location_map-blank 1_0: 2407341818618378322
+      ChatGPT Image Apr 17, 2026, 01_18_13 PM_0: -1311412771449891409
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
