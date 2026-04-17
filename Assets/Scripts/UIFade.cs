@@ -13,9 +13,9 @@ public class UIFade : MonoBehaviour
             image = GetComponent<Image>();
     }
 
-    public void FadeOut()
+    public void FadeOut(float fadeDuration = 1f)
     {
-        StartCoroutine(FadeOutRoutine());
+        StartCoroutine(FadeOutRoutine(fadeDuration));
     }
 
     public void FadeIn()
@@ -32,7 +32,7 @@ public class UIFade : MonoBehaviour
         StartCoroutine(FadeInRoutine());
     }
 
-    private IEnumerator FadeOutRoutine()
+    private IEnumerator FadeOutRoutine(float fadeDuration = 1f)
     {
         float elapsed = 0f;
         Color startColor = image.color;
@@ -59,6 +59,8 @@ public class UIFade : MonoBehaviour
             startColor.b,
             0f
         );
+          if (gameObject != null)
+            gameObject.SetActive(false);
     }
 
     private IEnumerator FadeInRoutine()

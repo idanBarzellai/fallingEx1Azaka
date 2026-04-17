@@ -70,7 +70,15 @@ public class GameManager : MonoBehaviour
 
     private bool gameOver = false;
     private Coroutine loseReasonRoutine;
+    private Coroutine gameLoopRoutine;
     private Coroutine uiScaleCenterRoutine;
+    private readonly Dictionary<RectTransform, UITransformSnapshot> uiOriginalTransforms = new Dictionary<RectTransform, UITransformSnapshot>();
+
+    private struct UITransformSnapshot
+    {
+        public Vector2 anchoredPosition;
+        public Vector3 localScale;
+    }
 
     private readonly List<MissileEventData> activeMissiles = new List<MissileEventData>();
 
@@ -91,6 +99,7 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         currentLives = startingLives;
+        FadeOutLives();
         crisisAvoidedHighScoreCount = PlayerPrefs.GetInt("HighScore", 0);
         RefreshUItext();
         tvVideoPlayer.loopPointReached +=  VideoStopped;
@@ -101,12 +110,23 @@ public class GameManager : MonoBehaviour
         if (loseReasonText != null)
             loseReasonText.text = "Until today " + crisisAvoidedHighScoreCount + " crises avoided.";
 
-        StartCoroutine(GameLoop());
+            if(tvUI != null){
+                    ScaleAndCenterUI(tvUI);
+PlayVideo();
+                }
+
+        gameLoopRoutine = StartCoroutine(GameLoop());
     }
 
     private IEnumerator GameLoop()
     {
+        yield return new WaitForSeconds(3f);
+
+         if (tvUI != null)
+            RestoreUIOriginalTransform(tvUI);
         yield return new WaitForSeconds(1f);
+        FadeInLives();
+
 
         while (!gameOver)
         {
@@ -427,6 +447,12 @@ private void OnMissileTapped(MissileEventData missileData)
     {
         gameOver = true;
 
+        if (gameLoopRoutine != null)
+        {
+            StopCoroutine(gameLoopRoutine);
+            gameLoopRoutine = null;
+        }
+
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.PlayGameOver();
@@ -465,19 +491,7 @@ private void OnMissileTapped(MissileEventData missileData)
                 gameOverPanel.GetComponent<UIFade>().FadeIn();
             }
 
-            if(livesImages != null)
-            {
-                foreach (var lifeImage in livesImages)
-                {
-                    if (lifeImage != null)
-                        lifeImage.GetComponent<UIFade>().FadeOut();
-                }
-            }
-
-            if(livesUIFrame != null)
-                livesUIFrame.GetComponent<UIFade>().FadeOut();
-            if(livesUIBG != null)                
-                livesUIBG.GetComponent<UIFade>().FadeOut();
+            FadeOutLives();
             if(toolBar != null)
                 toolBar.GetComponent<UIFade>().FadeOut();
 
@@ -486,6 +500,39 @@ private void OnMissileTapped(MissileEventData missileData)
 PlayVideo();
                 }
 
+    }
+
+    private void FadeOutLives(float fadeDuration = 0.1f){
+     if(livesImages != null)
+            {
+                foreach (var lifeImage in livesImages)
+                {
+                    if (lifeImage != null)
+                        lifeImage.GetComponent<UIFade>().FadeOut(fadeDuration);
+                }
+            }
+
+            if(livesUIFrame != null)
+                livesUIFrame.GetComponent<UIFade>().FadeOut(fadeDuration);
+            if(livesUIBG != null)                
+                livesUIBG.GetComponent<UIFade>().FadeOut(fadeDuration);
+    }
+
+    private void FadeInLives(){
+        if (livesImages != null)
+        {
+            foreach (var lifeImage in livesImages)
+            {
+                if (lifeImage != null)
+                    lifeImage.GetComponent<UIFade>()?.FadeIn();
+            }
+        }
+
+        if (livesUIFrame != null)
+            livesUIFrame.GetComponent<UIFade>()?.FadeIn();
+
+        if (livesUIBG != null)
+            livesUIBG.GetComponent<UIFade>()?.FadeIn();
     }
 
     private void PlayVideo()
@@ -509,6 +556,15 @@ PlayVideo();
         if (rectTransform == null)
             return;
 
+        if (!uiOriginalTransforms.ContainsKey(rectTransform))
+        {
+            uiOriginalTransforms[rectTransform] = new UITransformSnapshot
+            {
+                anchoredPosition = rectTransform.anchoredPosition,
+                localScale = rectTransform.localScale
+            };
+        }
+
         // Calculate scale factor to fit the visible camera rect
         float scaleX = visibleCameraRect.width / rectTransform.rect.width;
         float scaleY = visibleCameraRect.height / rectTransform.rect.height;
@@ -526,6 +582,30 @@ PlayVideo();
             StopCoroutine(uiScaleCenterRoutine);
 
         uiScaleCenterRoutine = StartCoroutine(ScaleAndCenterUIRoutine(rectTransform, centeredPosition, targetScale, gameOverUiTransitionDuration));
+    }
+
+    public void RestoreUIOriginalTransform(GameObject uiElement)
+    {
+        if (uiElement == null)
+            return;
+
+        RectTransform rectTransform = uiElement.GetComponent<RectTransform>();
+        if (rectTransform == null)
+            return;
+
+        UITransformSnapshot originalTransform;
+        if (!uiOriginalTransforms.TryGetValue(rectTransform, out originalTransform))
+            return;
+
+        if (uiScaleCenterRoutine != null)
+            StopCoroutine(uiScaleCenterRoutine);
+
+        uiScaleCenterRoutine = StartCoroutine(ScaleAndCenterUIRoutine(
+            rectTransform,
+            originalTransform.anchoredPosition,
+            originalTransform.localScale,
+            gameOverUiTransitionDuration
+        ));
     }
 
     private IEnumerator ScaleAndCenterUIRoutine(RectTransform rectTransform, Vector2 targetPosition, Vector3 targetScale, float duration)
@@ -612,7 +692,84 @@ PlayVideo();
 
     public void ResetGame()
     {
-        AudioManager.Instance.PlayButtonClick();
-        UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayButtonClick();
+            AudioManager.Instance.PlayGameplayBgm();
+        }
+
+        gameOver = false;
+
+        if (loseReasonRoutine != null)
+        {
+            StopCoroutine(loseReasonRoutine);
+            loseReasonRoutine = null;
+        }
+
+        if (uiScaleCenterRoutine != null)
+        {
+            StopCoroutine(uiScaleCenterRoutine);
+            uiScaleCenterRoutine = null;
+        }
+
+        if (gameLoopRoutine != null)
+        {
+            StopCoroutine(gameLoopRoutine);
+            gameLoopRoutine = null;
+        }
+
+        for (int i = activeMissiles.Count - 1; i >= 0; i--)
+        {
+            MissileEventData missile = activeMissiles[i];
+            if (missile == null)
+                continue;
+
+            if (missile.missileUI != null)
+                Destroy(missile.missileUI.gameObject);
+
+            if (missile.indicatorUI != null)
+                Destroy(missile.indicatorUI.gameObject);
+        }
+        activeMissiles.Clear();
+
+        SectorHandler[] sectors = new SectorHandler[]
+        {
+            northSector, southSector, centerSector, sharonSector, eilatSector
+        };
+
+        foreach (var sector in sectors)
+        {
+            if (sector == null)
+                continue;
+
+            sector.StopStateTimer();
+            sector.StopRepeatingStateTimer();
+            sector.StopAllSectorVfx();
+            sector.SetState(SectorState.Idle);
+        }
+
+        currentLives = startingLives;
+        crisisAvoidedCount = 0;
+        RefreshUItext();
+
+        if (loseReasonText != null)
+            loseReasonText.text = "Until today " + crisisAvoidedHighScoreCount + " crises avoided.";
+
+        if (gameOverPanel != null)
+            gameOverPanel.GetComponent<UIFade>()?.FadeOut(0.1f);
+
+
+        if (toolBar != null)
+            toolBar.GetComponent<UIFade>()?.FadeIn();
+
+        if (tvVideoPlayer != null)
+            tvVideoPlayer.Stop();
+
+        if (tvVideoStaticImage != null)
+            tvVideoStaticImage.GetComponent<UIFade>()?.FadeIn();
+
+  
+
+        gameLoopRoutine = StartCoroutine(GameLoop());
     }
 }
