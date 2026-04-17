@@ -295,8 +295,11 @@ private void OnMissileTapped(MissileEventData missileData)
             return;
         }
 
-        if (sector.currentState == SectorState.NeedsAmbulance)
+        if (sector.currentState == SectorState.NeedsAmbulance){
+    LoseLife("Missile hit alerted sector " + sector.sectorName, sector.sectorName.ToString());
             StartAmbulancePenaltyLoop(sector);
+
+        }
 
         CleanupMissileEvent(missileData);
     }
@@ -363,19 +366,21 @@ private IEnumerator SmokeClearRoutine(SectorHandler sector)
     yield return StartCoroutine(sector.ClearSmokeWithAnimation());
 }
 
-    private IEnumerator AmbulanceRoutine(SectorHandler sector)
-    {
-        yield return new WaitForSeconds(ambulanceProcessTime);
+private IEnumerator AmbulanceRoutine(SectorHandler sector)
+{
+    yield return new WaitForSeconds(ambulanceProcessTime);
 
-        if (sector == null)
-            yield break;
+    if (sector == null)
+        yield break;
 
-        if (sector.currentState == SectorState.AmbulanceWorking)
-        {
-            sector.SetReadyForRelease();
-            StartReleasePenaltyLoop(sector);
-        }
-    }
+    if (sector.currentState != SectorState.AmbulanceWorking)
+        yield break;
+
+    sector.SetReadyForRelease();
+    StartReleasePenaltyLoop(sector);
+
+    yield return StartCoroutine(sector.ClearSmokeWithAnimation());
+}
 
     private void StartAmbulancePenaltyLoop(SectorHandler sector)
     {
@@ -480,7 +485,7 @@ private IEnumerator SmokeClearRoutine(SectorHandler sector)
 
         if (!gameOver && loseReasonText != null){
             
-            string status = currentLives == 5 ? "No crashes so far" : currentLives == 4 ? "An event occured in the" + sectorName : "" + (startingLives - currentLives) + " events occured all around the country";
+            string status = currentLives == 5 ? "No crashes so far" : currentLives == 4 ? "An event occured in the " + sectorName : "" + (startingLives - currentLives) + " events occured all around the country";
 
             loseReasonText.text = "Today " + crisisAvoidedCount + " crises avoided.\n" + status;
         }
