@@ -95,6 +95,9 @@ public class GameManager : MonoBehaviour
         RefreshUItext();
         tvVideoPlayer.loopPointReached +=  VideoStopped;
 
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayGameplayBgm();
+
         if (loseReasonText != null)
             loseReasonText.text = "Until today " + crisisAvoidedHighScoreCount + " crises avoided.";
 
@@ -121,6 +124,9 @@ public class GameManager : MonoBehaviour
 
         targetSector.BeginIncoming();
         targetSector.ShowAlertHint();
+
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayMissileWarning();
 
         MissileDirectionIndicator indicator = null;
         if (directionIndicatorPrefab != null && indicatorLayer != null)
@@ -159,6 +165,9 @@ public class GameManager : MonoBehaviour
             () => OnMissileTapped(missileData)
         );
 
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayMissileLaunch();
+
         if (missileData.indicatorUI != null)
             missileData.indicatorUI.BeginTracking(missile.RectTransform, visibleCameraRect);
     }
@@ -167,6 +176,9 @@ private void OnMissileTapped(MissileEventData missileData)
 {
     if (missileData == null || missileData.resolved || missileData.targetSector == null || gameOver)
         return;
+
+    if (AudioManager.Instance != null)
+        AudioManager.Instance.PlayMissileTap();
 
     missileData.resolved = true;
 
@@ -187,6 +199,10 @@ private void OnMissileTapped(MissileEventData missileData)
     {
         sector.PlayInterceptSmokeSequenceAt(missileHitPosition, missileLayer);
         sector.StartIconFillUp(smokeClearTime, sector.releaseIconSprite);
+
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlaySmoke();
+
         StartCoroutine(SmokeClearRoutine(sector));
     }
     else if (sector.currentState == SectorState.NeedsAmbulanceCheck)
@@ -202,6 +218,9 @@ private void OnMissileTapped(MissileEventData missileData)
         if (missileData == null || missileData.resolved || missileData.targetSector == null || gameOver)
             return;
 
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayMissileImpact();
+
         missileData.resolved = true;
 
         if (missileData.indicatorUI != null)
@@ -211,7 +230,12 @@ private void OnMissileTapped(MissileEventData missileData)
         sector.ResolveCrash();
 
         if (sector.currentState == SectorState.NeedsAmbulance || sector.currentState == SectorState.Lost)
+        {
             sector.PlayCrashSequenceThenSmoke();
+
+            if (AudioManager.Instance != null)
+                AudioManager.Instance.PlayExplosion();
+        }
 
         if (sector.currentState == SectorState.Lost)
         {
@@ -253,6 +277,9 @@ private void OnMissileTapped(MissileEventData missileData)
 
         sector.StopRepeatingStateTimer();
         sector.SetState(SectorState.AmbulanceWorking);
+
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayAmbulance();
 
         // Per your rule: AmbulanceWorking uses RELEASE icon filling 0 -> 1
         sector.StartIconFillUp(ambulanceProcessTime, sector.releaseIconSprite);
@@ -319,6 +346,9 @@ private void OnMissileTapped(MissileEventData missileData)
     {
         if (gameOver)
             return;
+
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayLoseLife();
 
         currentLives--;
         livesImages[currentLives].GetComponent<UIFade>().FadeOut();
@@ -395,6 +425,12 @@ private void OnMissileTapped(MissileEventData missileData)
     private void TriggerGameOver(string reason)
     {
         gameOver = true;
+
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayGameOver();
+            AudioManager.Instance.PlayGameOverBgm();
+        }
 
         foreach (var missile in activeMissiles)
         {

@@ -135,6 +135,14 @@ public class AudioManager : MonoBehaviour
         sfxSource.PlayOneShot(clip, Mathf.Clamp01(sfxVolume * volumeMultiplier));
     }
 
+    public void PlaySfxIfAssigned(AudioClip clip, float volumeMultiplier = 1f)
+    {
+        if (clip == null)
+            return;
+
+        PlaySfx(clip, volumeMultiplier);
+    }
+
     // ---- Easy named calls ----
 
     public void PlayMainMenuBgm() => PlayBgm(mainMenuBgm);
