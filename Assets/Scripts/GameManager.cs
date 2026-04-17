@@ -190,13 +190,22 @@ PlayVideo();
             missileData.indicatorUI.BeginTracking(missile.RectTransform, visibleCameraRect);
     }
 
+    private bool HasActiveIncomingMissiles()
+{
+    foreach (var m in activeMissiles)
+    {
+        if (m != null && !m.resolved)
+            return true;
+    }
+    return false;
+}
+
 private void OnMissileTapped(MissileEventData missileData)
 {
     if (missileData == null || missileData.resolved || missileData.targetSector == null || gameOver)
         return;
 
-    if (AudioManager.Instance != null)
-        AudioManager.Instance.PlayMissileTap();
+  
 
     missileData.resolved = true;
 
@@ -211,19 +220,39 @@ private void OnMissileTapped(MissileEventData missileData)
         missileData.indicatorUI.StopTracking();
 
     SectorHandler sector = missileData.targetSector;
+    SectorState previousState = sector.currentState;
+
     sector.ResolveIntercepted();
 
+      if (AudioManager.Instance != null){
+        AudioManager.Instance.PlayMissileTap();
+
+        if(!HasActiveIncomingMissiles())
+    AudioManager.Instance.StopAlert();
+    }
+
+    // Alerted + intercepted = smoke -> release
     if (sector.currentState == SectorState.Smoked)
     {
         sector.PlayInterceptSmokeSequenceAt(missileHitPosition, missileLayer);
-        sector.StartIconFillUp(smokeClearTime, sector.releaseIconSprite);
-
-
+        // sector.StartIconFillUp(smokeClearTime, sector.releaseIconSprite);
         StartCoroutine(SmokeClearRoutine(sector));
+
+        CleanupMissileEvent(missileData);
+        return;
     }
-    else if (sector.currentState == SectorState.NeedsAmbulanceCheck)
+
+    // Not alerted + intercepted = lose 1 life + smoke + ambulance needed
+    if (sector.currentState == SectorState.NeedsAmbulanceCheck && previousState == SectorState.Incoming)
     {
+        LoseLife("Intercepted missile in " + sector.sectorName + " without alert.", sector.sectorName.ToString());
+
+        sector.PlayInterceptSmokeSequenceAt(missileHitPosition, missileLayer);
+
         StartAmbulancePenaltyLoop(sector);
+
+        CleanupMissileEvent(missileData);
+        return;
     }
 
     CleanupMissileEvent(missileData);
@@ -234,8 +263,7 @@ private void OnMissileTapped(MissileEventData missileData)
         if (missileData == null || missileData.resolved || missileData.targetSector == null || gameOver)
             return;
 
-        if (AudioManager.Instance != null)
-            AudioManager.Instance.PlayMissileImpact();
+       
 
         missileData.resolved = true;
 
@@ -244,6 +272,13 @@ private void OnMissileTapped(MissileEventData missileData)
 
         SectorHandler sector = missileData.targetSector;
         sector.ResolveCrash();
+
+         if (AudioManager.Instance != null){
+            AudioManager.Instance.PlayMissileImpact();
+
+        if(!HasActiveIncomingMissiles())
+    AudioManager.Instance.StopAlert();
+        }
 
         if (sector.currentState == SectorState.NeedsAmbulance || sector.currentState == SectorState.Lost)
         {
@@ -301,22 +336,32 @@ private void OnMissileTapped(MissileEventData missileData)
         }
 
         // Per your rule: AmbulanceWorking uses RELEASE icon filling 0 -> 1
-        sector.StartIconFillUp(ambulanceProcessTime, sector.releaseIconSprite);
+        // sector.StartIconFillUp(ambulanceProcessTime, sector.releaseIconSprite);
 
         StartCoroutine(AmbulanceRoutine(sector));
     }
 
-    private IEnumerator SmokeClearRoutine(SectorHandler sector)
-    {
-        yield return new WaitForSeconds(smokeClearTime);
+private IEnumerator SmokeClearRoutine(SectorHandler sector)
+{
+    if (sector == null)
+        yield break;
 
-        if (sector != null && sector.currentState == SectorState.Smoked)
-        {
-            yield return StartCoroutine(sector.ClearSmokeWithAnimation());
-            sector.SetReadyForRelease();
-            StartReleasePenaltyLoop(sector);
-        }
-    }
+    // sector.StartIconFillUp(smokeClearTime, sector.releaseIconSprite);
+
+    yield return new WaitForSeconds(smokeClearTime);
+
+    if (sector == null || sector.currentState != SectorState.Smoked)
+        yield break;
+
+    sector.StopStateTimer();
+
+    // switch to ready immediately
+    sector.SetReadyForRelease();
+    StartReleasePenaltyLoop(sector);
+
+    // let the smoke visual clear afterward
+    yield return StartCoroutine(sector.ClearSmokeWithAnimation());
+}
 
     private IEnumerator AmbulanceRoutine(SectorHandler sector)
     {
@@ -435,7 +480,7 @@ private void OnMissileTapped(MissileEventData missileData)
 
         if (!gameOver && loseReasonText != null){
             
-            string status = currentLives == 5 ? "No crashes so far" : currentLives == 4 ? "An event occured in the" + sectorName : "" + (startingLives - currentLives) + "events occured all around the country";
+            string status = currentLives == 5 ? "No crashes so far" : currentLives == 4 ? "An event occured in the" + sectorName : "" + (startingLives - currentLives) + " events occured all around the country";
 
             loseReasonText.text = "Today " + crisisAvoidedCount + " crises avoided.\n" + status;
         }
@@ -537,9 +582,11 @@ PlayVideo();
 
     private void PlayVideo()
     {
-                tvVideoStaticImage.gameObject.SetActive(false);
+                tvVideoStaticImage.GetComponent<UIFade>()?.FadeOut(0.1f);
         if (tvVideoPlayer != null){
             tvVideoPlayer.Play();
+
+            if(AudioManager.Instance != null)
             AudioManager.Instance.PlayRandomTvTalk();
         }
 

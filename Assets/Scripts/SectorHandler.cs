@@ -148,6 +148,7 @@ public class SectorHandler : MonoBehaviour
     {
         if (currentState == SectorState.Incoming)
         {
+            AudioManager.Instance?.PlayValidAction();
             SetState(SectorState.AlertedIncoming);
             HideStateTimer();
             Debug.Log(sectorName + " alerted during incoming missile.");
@@ -209,6 +210,7 @@ public class SectorHandler : MonoBehaviour
     {
         if (currentState == SectorState.NeedsAmbulance || currentState == SectorState.NeedsAmbulanceCheck)
         {
+            AudioManager.Instance?.PlayValidAction();
             GameManager.Instance?.StartAmbulanceProcess(this);
         }
         else
@@ -238,15 +240,15 @@ public class SectorHandler : MonoBehaviour
             SetState(SectorState.NeedsAmbulanceCheck);
     }
 
-    public void ResolveCrash()
-    {
-        StopFlicker();
+ public void ResolveCrash()
+{
+    StopFlicker();
 
-        if (currentState == SectorState.AlertedIncoming)
-            SetState(SectorState.NeedsAmbulance);
-        else if (currentState == SectorState.Incoming)
-            SetState(SectorState.Lost);
-    }
+    if (currentState == SectorState.AlertedIncoming)
+        SetState(SectorState.NeedsAmbulance);
+    else if (currentState == SectorState.Incoming)
+        SetState(SectorState.Lost);
+}
 
     public void SetReadyForRelease()
     {

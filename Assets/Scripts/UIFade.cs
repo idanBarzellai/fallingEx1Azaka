@@ -6,6 +6,8 @@ public class UIFade : MonoBehaviour
 {
     public Image image;
     public float fadeDuration = 1f;
+    private Coroutine fadeInCoroutine;
+    private Coroutine fadeOutCoroutine;
 
     private void Awake()
     {
@@ -15,11 +17,14 @@ public class UIFade : MonoBehaviour
 
     public void FadeOut(float fadeDuration = 1f)
     {
-        StartCoroutine(FadeOutRoutine(fadeDuration));
+        StopActiveFades();
+        fadeOutCoroutine = StartCoroutine(FadeOutRoutine(fadeDuration));
     }
 
     public void FadeIn()
     {
+        StopActiveFades();
+
         if (!gameObject.activeSelf)
             gameObject.SetActive(true);
 
@@ -29,7 +34,22 @@ public class UIFade : MonoBehaviour
         Color currentColor = image.color;
         image.color = new Color(currentColor.r, currentColor.g, currentColor.b, 0f);
 
-        StartCoroutine(FadeInRoutine());
+        fadeInCoroutine = StartCoroutine(FadeInRoutine());
+    }
+
+    private void StopActiveFades()
+    {
+        if (fadeOutCoroutine != null)
+        {
+            StopCoroutine(fadeOutCoroutine);
+            fadeOutCoroutine = null;
+        }
+
+        if (fadeInCoroutine != null)
+        {
+            StopCoroutine(fadeInCoroutine);
+            fadeInCoroutine = null;
+        }
     }
 
     private IEnumerator FadeOutRoutine(float fadeDuration = 1f)
@@ -61,6 +81,8 @@ public class UIFade : MonoBehaviour
         );
           if (gameObject != null)
             gameObject.SetActive(false);
+
+                fadeOutCoroutine = null;
     }
 
     private IEnumerator FadeInRoutine()
@@ -90,5 +112,7 @@ public class UIFade : MonoBehaviour
             startColor.b,
             1f
         );
+
+        fadeInCoroutine = null;
     }
 }

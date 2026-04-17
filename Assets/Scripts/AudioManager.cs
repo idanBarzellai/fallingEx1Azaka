@@ -7,6 +7,9 @@ public class AudioManager : MonoBehaviour
     [Header("Audio Sources")]
     [SerializeField] private AudioSource bgmSource;
     [SerializeField] private AudioSource sfxSource;
+    [SerializeField] private AudioSource alertSource;
+    [SerializeField] private AudioSource tvTalkSource;
+
 
     [Header("Volume")]
     [Range(0f, 1f)] public float bgmVolume = 0.6f;
@@ -83,6 +86,12 @@ public class AudioManager : MonoBehaviour
 
         sfxSource.loop = false;
         sfxSource.playOnAwake = false;
+
+        alertSource.loop = true;
+        alertSource.playOnAwake = false;
+
+        tvTalkSource.loop = false;
+        tvTalkSource.playOnAwake = false;
     }
 
     private void ApplyVolumes()
@@ -148,16 +157,18 @@ public class AudioManager : MonoBehaviour
 
     public void PlayGameplayBgm() => PlayBgm(gameplayBgm);
 
-    public void PlayMissileWarning() => PlaySfx(missileWarningSfx);
     public void PlayMissileTap() => PlaySfx(missileTapSfx, 2f);
     public void PlayExplosion() {
         PlaySfx(explosionSfx, 0.2f);
     } 
         
-    public void PlayAmbulance() => PlaySfx(ambulanceSfx);
+    public void PlayAmbulance() => PlaySfx(ambulanceSfx,0.5f);
     public void PlayRelease() => PlaySfx(releaseSfx, 0.7f);
     public void PlayLoseLife() => PlaySfx(loseLifeSfx);
-    public void PlayGameOver() => PlaySfx(gameOverSfx);
+    public void PlayGameOver() {
+        sfxSource.Stop(); // stop any other sfx to ensure game over is heard clearly
+        PlaySfx(gameOverSfx);
+    }
     public void PlayButtonClick() => PlaySfx(buttonClickSfx);
     public void PlayInvalidAction() => PlaySfx(invalidActionSfx);
     public void PlayValidAction() => PlaySfx(validActionSfx);
@@ -171,12 +182,34 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    public void PlayRandomTvTalk()
+    public void PlayMissileWarning(float volumeMultiplier = 1f) {
+if (alertSource == null || missileWarningSfx == null)
+            return;
+
+        alertSource.PlayOneShot(missileWarningSfx, Mathf.Clamp01(sfxVolume * volumeMultiplier));    }
+
+
+    public void PlayRandomTvTalk(float volumeMultiplier = 0.5f)
     {
         if (tvTalkSfx != null && tvTalkSfx.Length > 0)
         {
             int index = Random.Range(0, tvTalkSfx.Length);
-            PlaySfx(tvTalkSfx[index]);
+            if (tvTalkSource == null || tvTalkSfx[index] == null)
+                return;
+
+            tvTalkSource.PlayOneShot(tvTalkSfx[index], Mathf.Clamp01(sfxVolume * volumeMultiplier));
         }
+    }
+
+    public void StopAlert()
+{
+    if (alertSource != null && alertSource.isPlaying)
+        alertSource.Stop();
+}
+
+    public void StopTvTalk()
+    {
+        if (tvTalkSource != null && tvTalkSource.isPlaying)
+            tvTalkSource.Stop();
     }
 }
