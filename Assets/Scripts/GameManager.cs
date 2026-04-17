@@ -33,18 +33,24 @@ public class GameManager : MonoBehaviour
     private int crisisAvoidedHighScoreCount = 0;
     public TMP_Text livesText;
     public TMP_Text loseReasonText;
-    public Button resetButton;
+    public GameObject gameOverPanel;
+    public GameObject tvUI;
     public Image tvVideoStaticImage;
     public VideoPlayer tvVideoPlayer;
+    public GameObject toolBar;
 
 
     [Header("Lives")]
     public int startingLives = 5;
     private int currentLives;
     public Image[] livesImages; // Assign in inspector: 0 - life1, 1 - life2, etc.
+    public Image livesUIFrame;
+    public Image livesUIBG;
+
 
     [Header("Penalty UI")]
     public float loseReasonMessageDuration = 2.5f;
+    public float gameOverUiTransitionDuration = 0.6f;
 
     [Header("Missile Settings")]
     public float preLaunchWarningTime = 1.2f;
@@ -64,6 +70,7 @@ public class GameManager : MonoBehaviour
 
     private bool gameOver = false;
     private Coroutine loseReasonRoutine;
+    private Coroutine uiScaleCenterRoutine;
 
     private readonly List<MissileEventData> activeMissiles = new List<MissileEventData>();
 
@@ -369,8 +376,7 @@ private void OnMissileTapped(MissileEventData missileData)
 
     private IEnumerator ShowLoseReasonRoutine(string reason, string sectorName)
     {
-        tvVideoStaticImage.gameObject.SetActive(false);
-        tvVideoPlayer.Play();
+        PlayVideo();
         loseReasonText.text = reason;
 
         yield return new WaitForSeconds(loseReasonMessageDuration);
@@ -418,12 +424,97 @@ private void OnMissileTapped(MissileEventData missileData)
         if (loseReasonText != null)
             loseReasonText.text = reason;
 
-            if (resetButton != null)
+            if (gameOverPanel != null)
             {
-                resetButton.gameObject.SetActive(true);
+                gameOverPanel.GetComponent<UIFade>().FadeIn();
             }
+
+            if(livesImages != null)
+            {
+                foreach (var lifeImage in livesImages)
+                {
+                    if (lifeImage != null)
+                        lifeImage.GetComponent<UIFade>().FadeOut();
+                }
+            }
+
+            if(livesUIFrame != null)
+                livesUIFrame.GetComponent<UIFade>().FadeOut();
+            if(livesUIBG != null)                
+                livesUIBG.GetComponent<UIFade>().FadeOut();
+            if(toolBar != null)
+                toolBar.GetComponent<UIFade>().FadeOut();
+
+                if(tvUI != null){
+                    ScaleAndCenterUI(tvUI);
+PlayVideo();
+                }
+
     }
 
+    private void PlayVideo()
+    {
+                tvVideoStaticImage.gameObject.SetActive(false);
+        if (tvVideoPlayer != null)
+            tvVideoPlayer.Play();
+
+    }
+    private void ScaleAndCenterUI(GameObject uiElement)
+    {
+        RectTransform rectTransform = uiElement.GetComponent<RectTransform>();
+        if (rectTransform == null)
+            return;
+
+        // Calculate scale factor to fit the visible camera rect
+        float scaleX = visibleCameraRect.width / rectTransform.rect.width;
+        float scaleY = visibleCameraRect.height / rectTransform.rect.height;
+        float scaleAdjust = 0.9f; // Optional: Adjust to add some padding around the UI
+        float scaleFactor = Mathf.Min(scaleX, scaleY) * scaleAdjust;
+        Vector3 targetScale = new Vector3(scaleFactor, scaleFactor, 1f);
+
+        // Center the UI element in the visible camera rect
+        Vector2 centeredPosition = new Vector2(
+            visibleCameraRect.x + visibleCameraRect.width / 2f,
+            visibleCameraRect.y + visibleCameraRect.height / 2f - 300f
+        );
+
+        if (uiScaleCenterRoutine != null)
+            StopCoroutine(uiScaleCenterRoutine);
+
+        uiScaleCenterRoutine = StartCoroutine(ScaleAndCenterUIRoutine(rectTransform, centeredPosition, targetScale, gameOverUiTransitionDuration));
+    }
+
+    private IEnumerator ScaleAndCenterUIRoutine(RectTransform rectTransform, Vector2 targetPosition, Vector3 targetScale, float duration)
+    {
+        Vector2 startPosition = rectTransform.anchoredPosition;
+        Vector3 startScale = rectTransform.localScale;
+
+        if (duration <= 0f)
+        {
+            rectTransform.anchoredPosition = targetPosition;
+            rectTransform.localScale = targetScale;
+            uiScaleCenterRoutine = null;
+            yield break;
+        }
+
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            float smoothT = Mathf.SmoothStep(0f, 1f, t);
+
+            rectTransform.anchoredPosition = Vector2.Lerp(startPosition, targetPosition, smoothT);
+            rectTransform.localScale = Vector3.Lerp(startScale, targetScale, smoothT);
+
+            yield return null;
+        }
+
+        rectTransform.anchoredPosition = targetPosition;
+        rectTransform.localScale = targetScale;
+        uiScaleCenterRoutine = null;
+    }
     private SectorHandler GetRandomSector()
     {
         List<SectorHandler> availableSectors = new List<SectorHandler>();
