@@ -1,0 +1,71 @@
+using UnityEngine;
+
+public class UIAlarmVibrate : MonoBehaviour
+{
+   public RectTransform target;
+
+    [Header("Vibration Settings")]
+    public float angleAmount = 6f;
+    public float speed = 25f;
+
+    [Header("Pulse Settings")]
+    public float vibrateDuration = 0.3f;
+    public float pauseDuration = 0.4f;
+
+    private Vector3 startPos;
+    private Quaternion startRot;
+
+    private float timer;
+    private bool isVibrating = true;
+
+    private void Awake()
+    {
+        if (target == null)
+            target = GetComponent<RectTransform>();
+
+        startRot = target.localRotation;
+    }
+
+    private void OnEnable()
+    {
+        startRot = target.localRotation;
+        timer = vibrateDuration;
+        isVibrating = true;
+    }
+
+    private void Update()
+    {
+        timer -= Time.unscaledDeltaTime;
+
+        if (isVibrating)
+        {
+            // Vibrate
+            float wave = Mathf.Sin(Time.unscaledTime * speed);
+            float z = wave * angleAmount;
+            target.localRotation = startRot * Quaternion.Euler(0f, 0f, z);
+
+            if (timer <= 0f)
+            {
+                isVibrating = false;
+                timer = pauseDuration;
+
+                // Reset rotation when stopping
+                target.localRotation = startRot;
+            }
+        }
+        else
+        {
+            // Pause (no movement)
+            if (timer <= 0f)
+            {
+                isVibrating = true;
+                timer = vibrateDuration;
+            }
+        }
+    }
+
+    private void OnDisable()
+    {
+        target.localRotation = startRot;
+    }
+}
