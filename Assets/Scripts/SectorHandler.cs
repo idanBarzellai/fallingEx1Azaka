@@ -59,8 +59,8 @@ public class SectorHandler : MonoBehaviour
     public Sprite releaseIconSprite;
     public Sprite ambulanceIconSprite;
 
-        [Header("Release Confetti")]
-    public ParticleSystem confettiPrefab;
+    //     [Header("Release Confetti")]
+    // public ParticleSystem confettiPrefab;
 
     [Range(0f, 1f)] public float fadedHintAlpha = 0.35f;
     [Range(0f, 1f)] public float activeTimerAlpha = 0.95f;
@@ -181,7 +181,7 @@ public float invalidActionFlashInterval = 0.08f;
             SetState(SectorState.Idle);
             Debug.Log(sectorName + " released back to idle.");
             GameManager.Instance?.CrisisAvoided(sectorName.ToString());
-        StartCoroutine(PlayConfettiBurst());
+        // StartCoroutine(PlayConfettiBurst());
 
             return;
         }
@@ -205,14 +205,14 @@ PlayInvalidActionFlash();
         Debug.Log("Release cannot be applied to " + sectorName + " while state is " + currentState);
     }
 
-    private IEnumerator PlayConfettiBurst()
-    {
+    // private IEnumerator PlayConfettiBurst()
+    // {
         
-        if (confettiPrefab == null)
-            yield break;
+    //     if (confettiPrefab == null)
+    //         yield break;
 
-            confettiPrefab.Play();
-    }
+    //         confettiPrefab.Play();
+    // }
 
     private void TryApplyAmbulance()
     {

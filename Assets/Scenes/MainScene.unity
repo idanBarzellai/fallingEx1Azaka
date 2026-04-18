@@ -832,7 +832,6 @@ RectTransform:
   - {fileID: 1190817884}
   - {fileID: 317458740}
   - {fileID: 996822476}
-  - {fileID: 1730997089}
   - {fileID: 1468138440}
   - {fileID: 908278975}
   - {fileID: 746628601}
@@ -1637,6 +1636,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  gameplayShake: {fileID: 1190817887}
 --- !u!1001 &650386903
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3014,6 +3014,7 @@ GameObject:
   - component: {fileID: 1190817884}
   - component: {fileID: 1190817886}
   - component: {fileID: 1190817885}
+  - component: {fileID: 1190817887}
   m_Layer: 5
   m_Name: BackgroundImage
   m_TagString: Untagged
@@ -3078,6 +3079,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1190817883}
   m_CullTransparentMesh: 1
+--- !u!114 &1190817887
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1190817883}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83c04fa43711afd498f6bf2764a32014, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIShake
+  target: {fileID: 1190817884}
 --- !u!1 &1235074904
 GameObject:
   m_ObjectHideFlags: 0
@@ -3875,8 +3889,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -0.6714, y: -17.993}
-  m_SizeDelta: {x: 1344.9775, y: 1956}
+  m_AnchoredPosition: {x: -5, y: 0.0000076293945}
+  m_SizeDelta: {x: 1466.2656, y: 2132.389}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1468138441
 MonoBehaviour:
@@ -4286,81 +4300,6 @@ RectTransform:
   m_AnchoredPosition: {x: -31, y: -1618}
   m_SizeDelta: {x: 578.5, y: 163.51859}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!1 &1730997088
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1730997089}
-  - component: {fileID: 1730997091}
-  - component: {fileID: 1730997090}
-  m_Layer: 5
-  m_Name: Frame BG
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &1730997089
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1730997088}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 209217190}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 5.7349, y: -2.2505}
-  m_SizeDelta: {x: 1482.2695, y: 2169.6765}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1730997090
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1730997088}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 0
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: -1777370089409549732, guid: c3bc5bddf99982b4089a8ad0b918e045, type: 3}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
---- !u!222 &1730997091
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1730997088}
-  m_CullTransparentMesh: 1
 --- !u!1 &1783119883
 GameObject:
   m_ObjectHideFlags: 0

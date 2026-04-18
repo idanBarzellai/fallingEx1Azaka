@@ -108,6 +108,8 @@ private int resetVersion = 0;
         public bool resolved;
         public SectorName spawnSide;
     }
+    [Header("Juice")]
+[SerializeField] private UIShake gameplayShake;
 
     private void Awake()
     {
@@ -319,6 +321,7 @@ private void OnMissileTapped(MissileEventData missileData)
 
         SectorHandler sector = missileData.targetSector;
         sector.ResolveCrash();
+    gameplayShake?.Shake(0.28f, 26f, 30f);
 
          if (AudioManager.Instance != null){
             AudioManager.Instance.PlayMissileImpact();
