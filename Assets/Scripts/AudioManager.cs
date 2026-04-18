@@ -120,12 +120,9 @@ public class AudioManager : MonoBehaviour
             sfxSource.volume = sfxVolume;
     }
 
-    public void PlayBgm(AudioClip clip, bool restartIfSame = false)
+    public void PlayBgm(AudioClip clip)
     {
         if (bgmSource == null || clip == null)
-            return;
-
-        if (!restartIfSame && bgmSource.clip == clip && bgmSource.isPlaying)
             return;
 
 bgmSource.Stop();

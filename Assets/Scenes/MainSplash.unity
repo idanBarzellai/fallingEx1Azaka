@@ -938,7 +938,7 @@ MonoBehaviour:
   alertSource: {fileID: 1859048131}
   tvTalkSource: {fileID: 1859048130}
   bgmVolume: 0.6
-  sfxVolume: 1
+  sfxVolume: 0.5
   gameplayBgm: {fileID: 8300000, guid: 98488c66055f40b4da1cca8842913519, type: 3}
   missileWarningSfx: {fileID: 8300000, guid: cd9556eeceac2014096d679d458c7cee, type: 3}
   missileTapSfx: {fileID: 8300000, guid: 671202f400d3d4e459dda8f007b538f5, type: 3}

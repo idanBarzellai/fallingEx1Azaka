@@ -124,8 +124,6 @@ private int resetVersion = 0;
 // if (tvFrameAnimator != null)
 //     tvFrameAnimator.onPlaybackFinished += ShowTvStatic;
 
-        if (AudioManager.Instance != null)
-            AudioManager.Instance.PlayGameplayBgm();
 
         if (loseReasonText != null)
             loseReasonText.text = "Until today " + crisisAvoidedHighScoreCount + " crises avoided.";
@@ -221,8 +219,8 @@ while (!gameOver)
         MissileUI missile = Instantiate(missilePrefab, missileLayer);
         missileData.missileUI = missile;
 
-        Vector2 startPos = GetMissileStartPosition(missileData.spawnSide);
-        Vector2 targetPos = GetSectorAnchoredPosition(missileData.targetSector);
+        Vector2 startPos = GetMissileStartPosition(missileData.targetSector);
+        Vector2 targetPos = GetMissileTargetPosition(missileData.targetSector);
 
 float currentTravelDuration = GetCurrentMissileTravelDuration();
 
@@ -763,32 +761,143 @@ private void PlayVideo()
         return availableSectors[Random.Range(0, availableSectors.Count)];
     }
 
-    private Vector2 GetSectorAnchoredPosition(SectorHandler sector)
+    private Vector2 GetMissileTargetPosition(SectorHandler sector)
+{
+    if (sector == null)
+        return Vector2.zero;
+
+    RectTransform targetRect = null;
+
+    if (sector.stateTimerImage != null)
+        targetRect = sector.stateTimerImage.rectTransform;
+    else
+        targetRect = sector.GetComponent<RectTransform>();
+
+    if (targetRect == null || missileLayer == null)
+        return Vector2.zero;
+
+    Vector3 worldCenter = targetRect.TransformPoint(targetRect.rect.center);
+
+    Vector2 localPoint;
+    RectTransformUtility.ScreenPointToLocalPointInRectangle(
+        missileLayer,
+        RectTransformUtility.WorldToScreenPoint(null, worldCenter),
+        null,
+        out localPoint
+    );
+
+    return localPoint;
+}
+
+   private enum MissileSpawnEdge
+{
+    Top,
+    Bottom,
+    Left,
+    Right
+}
+
+private Vector2 GetMissileStartPosition(SectorHandler targetSector)
+{
+    if (targetSector == null)
+        return Vector2.zero;
+MissileSpawnEdge[] allowedEdges =
+            {
+                MissileSpawnEdge.Top,
+                MissileSpawnEdge.Left,
+                MissileSpawnEdge.Right,
+                MissileSpawnEdge.Bottom
+            };
+
+            MissileSpawnEdge edge = allowedEdges[Random.Range(0, allowedEdges.Length)];
+
+            switch (edge)
+            {
+                case MissileSpawnEdge.Top:
+                    // no top-left
+                    return GetSpawnPointFromEdge(MissileSpawnEdge.Top, 0f, 420f);
+
+                case MissileSpawnEdge.Bottom:
+                    // no bottom-right
+                    return GetSpawnPointFromEdge(MissileSpawnEdge.Bottom, -420f, 50f);
+
+                case MissileSpawnEdge.Left:
+                    return GetSpawnPointFromEdge(MissileSpawnEdge.Left, -350f, 500f);
+
+                case MissileSpawnEdge.Right:
+                default:
+                    return GetSpawnPointFromEdge(MissileSpawnEdge.Right, -420f, 0f);
+            }
+    // switch (targetSector.sectorName)
+    // {
+    //     case SectorName.North:
+    //         // top is allowed, but avoid top-left corner
+    //         return GetSpawnPointFromEdge(MissileSpawnEdge.Top, 0f, 420f);
+
+    //     case SectorName.Sharon:
+    //         return GetSpawnPointFromEdge(MissileSpawnEdge.Left, -250f, 650f);
+
+    //     case SectorName.Center:
+    //     {
+    //         MissileSpawnEdge[] allowedEdges =
+    //         {
+    //             MissileSpawnEdge.Top,
+    //             MissileSpawnEdge.Left,
+    //             MissileSpawnEdge.Right,
+    //             MissileSpawnEdge.Bottom
+    //         };
+
+    //         MissileSpawnEdge edge = allowedEdges[Random.Range(0, allowedEdges.Length)];
+
+    //         switch (edge)
+    //         {
+    //             case MissileSpawnEdge.Top:
+    //                 // no top-left
+    //                 return GetSpawnPointFromEdge(MissileSpawnEdge.Top, 0f, 420f);
+
+    //             case MissileSpawnEdge.Bottom:
+    //                 // no bottom-right
+    //                 return GetSpawnPointFromEdge(MissileSpawnEdge.Bottom, -420f, 50f);
+
+    //             case MissileSpawnEdge.Left:
+    //                 return GetSpawnPointFromEdge(MissileSpawnEdge.Left, -350f, 500f);
+
+    //             case MissileSpawnEdge.Right:
+    //             default:
+    //                 return GetSpawnPointFromEdge(MissileSpawnEdge.Right, -420f, 0f);
+    //         }
+    //     }
+
+    //     case SectorName.South:
+    //         // bottom allowed, but only from left/center-left
+    //         return GetSpawnPointFromEdge(MissileSpawnEdge.Bottom, -420f, 50f);
+
+    //     case SectorName.Eilat:
+    //         return GetSpawnPointFromEdge(MissileSpawnEdge.Right, -700f, 0f);
+
+    //     default:
+    //         return GetSpawnPointFromEdge(MissileSpawnEdge.Top, 0f, 420f);
+    // }
+}
+
+private Vector2 GetSpawnPointFromEdge(MissileSpawnEdge edge, float rangeMin, float rangeMax)
+{
+    switch (edge)
     {
-        return sector.GetComponent<RectTransform>().anchoredPosition;
+        case MissileSpawnEdge.Top:
+            return new Vector2(Random.Range(rangeMin, rangeMax), 2000f);
+
+        case MissileSpawnEdge.Bottom:
+            return new Vector2(Random.Range(rangeMin, rangeMax), -2000f);
+
+        case MissileSpawnEdge.Left:
+            return new Vector2(-1500f, Random.Range(rangeMin, rangeMax));
+
+        case MissileSpawnEdge.Right:
+        default:
+            return new Vector2(1500f, Random.Range(rangeMin, rangeMax));
     }
-
-    private Vector2 GetMissileStartPosition(SectorName sector)
-    {
-        switch (sector)
-        {
-            case SectorName.Eilat:
-                return new Vector2(1500f, Random.Range(-500f, 500f));
-
-            case SectorName.South:
-                return new Vector2(Random.Range(-350f, 350f), -2000f);
-
-            case SectorName.Center:
-                return new Vector2(Random.Range(-250f, 250f), 2000f);
-
-            case SectorName.Sharon:
-                return new Vector2(-1500f, Random.Range(-500f, 500f));
-
-            case SectorName.North:
-            default:
-                return new Vector2(Random.Range(-350f, 350f), 2000f);
-        }
-    }
+}
 
     public void ResetGame()
     {
