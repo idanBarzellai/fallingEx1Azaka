@@ -475,8 +475,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -356}
-  m_SizeDelta: {x: 692.5414, y: 234.6813}
+  m_AnchoredPosition: {x: 0, y: -311.10742}
+  m_SizeDelta: {x: 957.4961, y: 324.4664}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &1090094398
 MonoBehaviour:
@@ -498,7 +498,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -7461381958337088399, guid: 56c288c6edfc3694088519932b5357b8, type: 3}
+  m_Sprite: {fileID: -2378178389674787844, guid: 2d568c509e658704fa30d63f2e2bc65a, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -941,7 +941,7 @@ MonoBehaviour:
   sfxVolume: 1
   gameplayBgm: {fileID: 8300000, guid: 98488c66055f40b4da1cca8842913519, type: 3}
   missileWarningSfx: {fileID: 8300000, guid: cd9556eeceac2014096d679d458c7cee, type: 3}
-  missileTapSfx: {fileID: 8300000, guid: 4c0fc1c1dedffa04692b203fdcd14cef, type: 3}
+  missileTapSfx: {fileID: 8300000, guid: 671202f400d3d4e459dda8f007b538f5, type: 3}
   missileImpactSfxs:
   - {fileID: 8300000, guid: 4b5c869cec8cdc448ba65554448310ae, type: 3}
   - {fileID: 8300000, guid: 10f825e26c100454fa37bf0ab6254879, type: 3}
