@@ -914,4 +914,30 @@ private void SpawnSmokeAtPoint(Vector2 worldAnchoredPosition, RectTransform sour
             onTick?.Invoke();
         }
     }
+
+    public void ResetSectorCompletely()
+{
+    StopAllCoroutines();
+
+    flickerRoutine = null;
+    activeVfxRoutine = null;
+    stateTimerRoutine = null;
+    repeatingStateTimerRoutine = null;
+    timerPulseRoutine = null;
+    timerBreathingRoutine = null;
+    timerClearRoutine = null;
+
+    StopAllSectorVfx();
+    HideStateTimer();
+
+    if (baseImage != null)
+    {
+        Color c = idleColor;
+        c.a = 1f;
+        baseImage.color = c;
+    }
+
+    currentState = SectorState.Idle;
+    UpdateVisual();
+}
 }

@@ -25,8 +25,7 @@ public class UIBreathing : MonoBehaviour
 
     private void Update()
     {
-        float wave = (Mathf.Sin(Time.unscaledTime * speed) + 1f) * 0.5f; 
-        float scale = 1f + (wave * scaleAmount);
+float wave = (Mathf.Sin(Time.time * speed) + 1f) * 0.5f;        float scale = 1f + (wave * scaleAmount);
 
         target.localScale = baseScale * scale;
     }

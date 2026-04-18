@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.Video;
 
@@ -38,6 +39,8 @@ public class GameManager : MonoBehaviour
     public Image tvVideoStaticImage;
     public VideoPlayer tvVideoPlayer;
     public GameObject toolBar;
+    [SerializeField] private GameObject pauseMenuPanel;
+private bool isPaused = false;
 
 
     [Header("Lives")]
@@ -63,11 +66,19 @@ public class GameManager : MonoBehaviour
     public float releaseNeglectInterval = 10f;
 
 
+[Header("Difficulty Ramp")]
+[SerializeField] private float earlyGameMinDelay = 5.5f;
+[SerializeField] private float earlyGameMaxDelay = 8.0f;
+[SerializeField] private float lateGameMinDelay = 0.8f;
+[SerializeField] private float lateGameMaxDelay = 2.0f;
+[SerializeField] private float timeToMaxDifficulty = 90f;
+[SerializeField] private AnimationCurve difficultyCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
+private float gameTimeElapsed = 0f;
 
-    [SerializeField] private float minLaunchDelay = 3.5f;
-    [SerializeField] private float maxLaunchDelay = 6.5f;
-
+    // [SerializeField] private float minLaunchDelay = 3.5f;
+    // [SerializeField] private float maxLaunchDelay = 6.5f;
+private int resetVersion = 0;
     private bool gameOver = false;
     private Coroutine loseReasonRoutine;
     private Coroutine gameLoopRoutine;
@@ -118,6 +129,20 @@ PlayVideo();
         gameLoopRoutine = StartCoroutine(GameLoop());
     }
 
+private float GetCurrentLaunchDelay()
+{
+    float timeT = Mathf.Clamp01(gameTimeElapsed / timeToMaxDifficulty);
+    float scoreT = Mathf.Clamp01(crisisAvoidedCount / 15f);
+
+    float combinedT = Mathf.Clamp01((timeT * 0.7f) + (scoreT * 0.3f));
+    float difficultyT = difficultyCurve.Evaluate(combinedT);
+
+    float currentMin = Mathf.Lerp(earlyGameMinDelay, lateGameMinDelay, difficultyT);
+    float currentMax = Mathf.Lerp(earlyGameMaxDelay, lateGameMaxDelay, difficultyT);
+
+    return Random.Range(currentMin, currentMax);
+}
+
     private IEnumerator GameLoop()
     {
         yield return new WaitForSeconds(3f);
@@ -128,12 +153,15 @@ PlayVideo();
         FadeInLives();
 
 
-        while (!gameOver)
-        {
-            StartCoroutine(StartMissileEventRoutine());
-            float delay = Random.Range(minLaunchDelay, maxLaunchDelay);
-            yield return new WaitForSeconds(delay);
-        }
+while (!gameOver)
+{
+    StartCoroutine(StartMissileEventRoutine());
+
+    float delay = GetCurrentLaunchDelay();
+    yield return new WaitForSeconds(delay);
+
+    gameTimeElapsed += delay;
+}
     }
 
     private IEnumerator StartMissileEventRoutine()
@@ -346,29 +374,34 @@ private void OnMissileTapped(MissileEventData missileData)
 
 private IEnumerator SmokeClearRoutine(SectorHandler sector)
 {
+    int routineVersion = resetVersion;
+
     if (sector == null)
         yield break;
 
-    // sector.StartIconFillUp(smokeClearTime, sector.releaseIconSprite);
-
     yield return new WaitForSeconds(smokeClearTime);
+
+    if (routineVersion != resetVersion)
+        yield break;
 
     if (sector == null || sector.currentState != SectorState.Smoked)
         yield break;
 
     sector.StopStateTimer();
-
-    // switch to ready immediately
     sector.SetReadyForRelease();
     StartReleasePenaltyLoop(sector);
 
-    // let the smoke visual clear afterward
     yield return StartCoroutine(sector.ClearSmokeWithAnimation());
 }
 
 private IEnumerator AmbulanceRoutine(SectorHandler sector)
 {
+    int routineVersion = resetVersion;
+
     yield return new WaitForSeconds(ambulanceProcessTime);
+
+    if (routineVersion != resetVersion)
+        yield break;
 
     if (sector == null)
         yield break;
@@ -744,6 +777,14 @@ PlayVideo();
 
     public void ResetGame()
     {
+        Time.timeScale = 1f;
+isPaused = false;
+
+if (pauseMenuPanel != null)
+    pauseMenuPanel.SetActive(false);
+
+        gameTimeElapsed = 0f;
+        resetVersion++;
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.PlayButtonClick();
@@ -794,10 +835,7 @@ PlayVideo();
             if (sector == null)
                 continue;
 
-            sector.StopStateTimer();
-            sector.StopRepeatingStateTimer();
-            sector.StopAllSectorVfx();
-            sector.SetState(SectorState.Idle);
+       sector.ResetSectorCompletely();
         }
 
         currentLives = startingLives;
@@ -824,4 +862,60 @@ PlayVideo();
 
         gameLoopRoutine = StartCoroutine(GameLoop());
     }
+
+    public void TogglePause()
+{
+    if (gameOver)
+        return;
+
+    if (isPaused)
+        ResumeGame();
+    else
+        PauseGame();
+}
+
+public void PauseGame()
+{
+    if (gameOver || isPaused)
+        return;
+
+    isPaused = true;
+    Time.timeScale = 0f;
+
+    if (pauseMenuPanel != null)
+        pauseMenuPanel.SetActive(true);
+
+    if (tvVideoPlayer != null)
+        tvVideoPlayer.Pause();
+
+    AudioManager.Instance?.StopTvTalk();
+    AudioManager.Instance?.StopAlert();
+}
+
+public void ResumeGame()
+{
+    if (!isPaused)
+        return;
+
+    isPaused = false;
+    Time.timeScale = 1f;
+
+    if (pauseMenuPanel != null)
+        pauseMenuPanel.SetActive(false);
+
+    if (tvVideoPlayer != null)
+        tvVideoPlayer.Play();
+}
+
+public void QuitToMainMenu()
+{
+    Time.timeScale = 1f;
+    isPaused = false;
+
+    AudioManager.Instance?.PlayButtonClick();
+    AudioManager.Instance?.StopAlert();
+    AudioManager.Instance?.StopTvTalk();
+
+    SceneManager.LoadScene("MainMenu");
+}
 }

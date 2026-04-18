@@ -46,7 +46,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -142,12 +142,12 @@ TextureImporter:
       name: ChatGPT Image Apr 17, 2026, 12_39_28 PM_0
       rect:
         serializedVersion: 2
-        x: 11
-        y: 0
-        width: 1438
-        height: 1024
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 187
+        y: 361
+        width: 1122
+        height: 415
+      alignment: 9
+      pivot: {x: 0.49015474, y: 0.43611708}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []

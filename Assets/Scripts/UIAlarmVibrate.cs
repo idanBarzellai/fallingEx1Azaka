@@ -37,7 +37,7 @@ public class UIAlarmVibrate : MonoBehaviour
 
     private void Update()
     {
-        timer -= Time.unscaledDeltaTime;
+timer -= Time.deltaTime;
 
         if (isVibrating)
         {
@@ -52,7 +52,7 @@ public class UIAlarmVibrate : MonoBehaviour
             }
 
             // Vibrate
-            float wave = Mathf.Sin(Time.unscaledTime * speed);
+float wave = Mathf.Sin(Time.time * speed);
             float z = wave * angleAmount;
             target.localRotation = startRot * Quaternion.Euler(0f, 0f, z);
 
