@@ -157,9 +157,9 @@ TextureImporter:
       name: ChatGPT Image Apr 18, 2026, 12_04_51 PM_0
       rect:
         serializedVersion: 2
-        x: 384
+        x: 432
         y: 482
-        width: 824
+        width: 705
         height: 142
       alignment: 0
       pivot: {x: 0.5, y: 0.5}

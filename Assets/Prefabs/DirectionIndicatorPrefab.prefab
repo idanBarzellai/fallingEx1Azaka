@@ -51,7 +51,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MissileDirectionIndicator
   rectTransform: {fileID: 0}
   image: {fileID: 0}
-  edgePadding: 70
+  edgePadding: 130.9
 --- !u!1 &6393130415944360075
 GameObject:
   m_ObjectHideFlags: 0

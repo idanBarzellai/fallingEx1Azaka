@@ -9,6 +9,9 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioSource sfxSource;
     [SerializeField] private AudioSource alertSource;
     [SerializeField] private AudioSource tvTalkSource;
+    private bool isTvTalkPaused = false;
+    private bool isAlertPaused = false;
+
 
 
     [Header("Volume")]
@@ -125,6 +128,7 @@ public class AudioManager : MonoBehaviour
         if (!restartIfSame && bgmSource.clip == clip && bgmSource.isPlaying)
             return;
 
+bgmSource.Stop();
         bgmSource.clip = clip;
         bgmSource.volume = bgmVolume;
         bgmSource.loop = true;
@@ -166,7 +170,7 @@ public class AudioManager : MonoBehaviour
     public void PlayRelease() => PlaySfx(releaseSfx, 0.7f);
     public void PlayLoseLife() => PlaySfx(loseLifeSfx);
     public void PlayGameOver() {
-        sfxSource.Stop(); // stop any other sfx to ensure game over is heard clearly
+        // sfxSource.Stop(); // stop any other sfx to ensure game over is heard clearly
         PlaySfx(gameOverSfx);
     }
     public void PlayButtonClick() => PlaySfx(buttonClickSfx);
@@ -196,10 +200,81 @@ if (alertSource == null || missileWarningSfx == null)
             int index = Random.Range(0, tvTalkSfx.Length);
             if (tvTalkSource == null || tvTalkSfx[index] == null)
                 return;
-
+tvTalkSource.Stop();
             tvTalkSource.PlayOneShot(tvTalkSfx[index], Mathf.Clamp01(sfxVolume * volumeMultiplier));
         }
     }
+
+    public void PauseGeneralAudio()
+    {
+        if (bgmSource != null && bgmSource.isPlaying)
+            bgmSource.Pause();
+
+        if (sfxSource != null && sfxSource.isPlaying)
+            sfxSource.Pause();
+
+        PauseAlert();
+        PauseTvTalk();
+    }
+
+    public void UnPauseGeneralAudio()
+    {
+        if (bgmSource != null && bgmSource.clip != null && !bgmSource.isPlaying)
+            bgmSource.UnPause();
+
+        if (sfxSource != null && !sfxSource.isPlaying)
+            sfxSource.UnPause();
+
+        UnPauseAlert();
+        UnPauseTvTalk();
+    }
+
+    public void PauseAlert()
+    {
+        if (alertSource != null && alertSource.isPlaying)
+        {
+            alertSource.Pause();
+            isAlertPaused = true;
+        }
+    }
+
+    public void UnPauseAlert()
+    {
+        if (alertSource != null && isAlertPaused)
+        {
+            alertSource.UnPause();
+            isAlertPaused = false;
+        }
+    }
+
+    public void PauseTvTalk()
+    {
+        if (tvTalkSource != null && tvTalkSource.isPlaying)
+        {
+            tvTalkSource.Pause();
+            isTvTalkPaused = true;
+        }
+    }
+
+    public void UnPauseTvTalk()
+    {
+        if (tvTalkSource != null && isTvTalkPaused)
+        {
+            tvTalkSource.UnPause();
+            isTvTalkPaused = false;
+        }
+    }
+
+
+ public void StopGeneralAudio()
+    {
+        if (sfxSource != null)
+            sfxSource.Stop();
+
+        StopAlert();
+        StopTvTalk();
+    }
+
 
     public void StopAlert()
 {
@@ -210,6 +285,6 @@ if (alertSource == null || missileWarningSfx == null)
     public void StopTvTalk()
     {
         if (tvTalkSource != null && tvTalkSource.isPlaying)
-            tvTalkSource.Stop();
+        tvTalkSource.Stop();
     }
 }

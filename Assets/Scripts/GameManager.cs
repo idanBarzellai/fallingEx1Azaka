@@ -4,7 +4,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using UnityEngine.Video;
 
 
 public class GameManager : MonoBehaviour
@@ -36,9 +35,12 @@ public class GameManager : MonoBehaviour
     public TMP_Text loseReasonText;
     public GameObject gameOverPanel;
     public GameObject tvUI;
-    public Image tvVideoStaticImage;
-    public VideoPlayer tvVideoPlayer;
+    // public Image tvVideoStaticImage;
+    // public VideoPlayer tvVideoPlayer;
+    public UIImageFrameAnimator tvFrameAnimator;
     public GameObject toolBar;
+    public GameObject toolBarBG;
+
     [SerializeField] private GameObject pauseMenuPanel;
 private bool isPaused = false;
 
@@ -67,17 +69,22 @@ private bool isPaused = false;
 
 
 [Header("Difficulty Ramp")]
-[SerializeField] private float earlyGameMinDelay = 5.5f;
-[SerializeField] private float earlyGameMaxDelay = 8.0f;
-[SerializeField] private float lateGameMinDelay = 0.8f;
-[SerializeField] private float lateGameMaxDelay = 2.0f;
-[SerializeField] private float timeToMaxDifficulty = 90f;
+[SerializeField] private float earlyGameMinDelay = 12f;
+[SerializeField] private float earlyGameMaxDelay = 15f;
+[SerializeField] private float lateGameMinDelay = 3f;
+[SerializeField] private float lateGameMaxDelay = 8f;
+
+[SerializeField] private float earlyGameMissileTravelDuration = 6f;
+[SerializeField] private float lateGameMissileTravelDuration = 3f;
+
+[SerializeField] private float timeToMaxDifficulty = 300f;
 [SerializeField] private AnimationCurve difficultyCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
 private float gameTimeElapsed = 0f;
 
-    // [SerializeField] private float minLaunchDelay = 3.5f;
-    // [SerializeField] private float maxLaunchDelay = 6.5f;
+
+
+
 private int resetVersion = 0;
     private bool gameOver = false;
     private Coroutine loseReasonRoutine;
@@ -113,7 +120,9 @@ private int resetVersion = 0;
         FadeOutLives();
         crisisAvoidedHighScoreCount = PlayerPrefs.GetInt("HighScore", 0);
         RefreshUItext();
-        tvVideoPlayer.loopPointReached +=  VideoStopped;
+        // tvVideoPlayer.loopPointReached +=  VideoStopped;
+// if (tvFrameAnimator != null)
+//     tvFrameAnimator.onPlaybackFinished += ShowTvStatic;
 
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlayGameplayBgm();
@@ -123,19 +132,23 @@ private int resetVersion = 0;
 
             if(tvUI != null){
                     ScaleAndCenterUI(tvUI);
-PlayVideo();
+                    PlayVideo();
                 }
 
         gameLoopRoutine = StartCoroutine(GameLoop());
     }
-
-private float GetCurrentLaunchDelay()
+private float GetCurrentDifficultyT()
 {
     float timeT = Mathf.Clamp01(gameTimeElapsed / timeToMaxDifficulty);
     float scoreT = Mathf.Clamp01(crisisAvoidedCount / 15f);
 
     float combinedT = Mathf.Clamp01((timeT * 0.7f) + (scoreT * 0.3f));
-    float difficultyT = difficultyCurve.Evaluate(combinedT);
+    return difficultyCurve.Evaluate(combinedT);
+}
+
+private float GetCurrentLaunchDelay()
+{
+    float difficultyT = GetCurrentDifficultyT();
 
     float currentMin = Mathf.Lerp(earlyGameMinDelay, lateGameMinDelay, difficultyT);
     float currentMax = Mathf.Lerp(earlyGameMaxDelay, lateGameMaxDelay, difficultyT);
@@ -143,12 +156,18 @@ private float GetCurrentLaunchDelay()
     return Random.Range(currentMin, currentMax);
 }
 
+private float GetCurrentMissileTravelDuration()
+{
+    float difficultyT = GetCurrentDifficultyT();
+    return Mathf.Lerp(earlyGameMissileTravelDuration, lateGameMissileTravelDuration, difficultyT);
+}
+
     private IEnumerator GameLoop()
     {
         yield return new WaitForSeconds(3f);
 
          if (tvUI != null)
-            RestoreUIOriginalTransform(tvUI);
+RestoreUIOriginalTransform(tvUI);
         yield return new WaitForSeconds(1f);
         FadeInLives();
 
@@ -205,20 +224,22 @@ while (!gameOver)
         Vector2 startPos = GetMissileStartPosition(missileData.spawnSide);
         Vector2 targetPos = GetSectorAnchoredPosition(missileData.targetSector);
 
-        missile.Launch(
-            startPos,
-            targetPos,
-            missileTravelDuration,
-            () => OnMissileImpact(missileData),
-            () => OnMissileTapped(missileData)
-        );
+float currentTravelDuration = GetCurrentMissileTravelDuration();
+
+missile.Launch(
+    startPos,
+    targetPos,
+    currentTravelDuration,
+    () => OnMissileImpact(missileData),
+    () => OnMissileTapped(missileData)
+);
 
 
         if (missileData.indicatorUI != null)
             missileData.indicatorUI.BeginTracking(missile.RectTransform, visibleCameraRect);
     }
 
-    private bool HasActiveIncomingMissiles()
+    public bool HasActiveIncomingMissiles()
 {
     foreach (var m in activeMissiles)
     {
@@ -577,6 +598,8 @@ private IEnumerator AmbulanceRoutine(SectorHandler sector)
             FadeOutLives();
             if(toolBar != null)
                 toolBar.GetComponent<UIFade>().FadeOut();
+                if(toolBarBG != null)
+                toolBarBG.GetComponent<UIFade>().FadeOut();
 
                 if(tvUI != null){
                     ScaleAndCenterUI(tvUI);
@@ -617,24 +640,16 @@ PlayVideo();
         if (livesUIBG != null)
             livesUIBG.GetComponent<UIFade>()?.FadeIn();
     }
+private void PlayVideo()
+{
+    if (tvFrameAnimator != null)
+        tvFrameAnimator.PlayFromStart();
 
-    private void PlayVideo()
-    {
-                tvVideoStaticImage.GetComponent<UIFade>()?.FadeOut(0.1f);
-        if (tvVideoPlayer != null){
-            tvVideoPlayer.Play();
+    if (AudioManager.Instance != null)
+        AudioManager.Instance.PlayRandomTvTalk();
+}
 
-            if(AudioManager.Instance != null)
-            AudioManager.Instance.PlayRandomTvTalk();
-        }
 
-    }
-
-    private void VideoStopped(VideoPlayer vp)
-    {
-        if (tvVideoStaticImage != null)
-            tvVideoStaticImage.GetComponent<UIFade>().FadeIn();
-    }
     private void ScaleAndCenterUI(GameObject uiElement)
     {
         RectTransform rectTransform = uiElement.GetComponent<RectTransform>();
@@ -851,12 +866,14 @@ if (pauseMenuPanel != null)
 
         if (toolBar != null)
             toolBar.GetComponent<UIFade>()?.FadeIn();
+            if (toolBarBG != null)
+            toolBarBG.GetComponent<UIFade>()?.FadeIn();
 
-        if (tvVideoPlayer != null)
-            tvVideoPlayer.Stop();
+if (tvFrameAnimator != null)
+    tvFrameAnimator.ShowFirstFrame();
+    PlayVideo();
 
-        if (tvVideoStaticImage != null)
-            tvVideoStaticImage.GetComponent<UIFade>()?.FadeIn();
+    AudioManager.Instance?.PlayGameplayBgm();
 
   
 
@@ -885,11 +902,12 @@ public void PauseGame()
     if (pauseMenuPanel != null)
         pauseMenuPanel.SetActive(true);
 
-    if (tvVideoPlayer != null)
-        tvVideoPlayer.Pause();
+if (tvFrameAnimator != null)
+    tvFrameAnimator.Pause();
 
-    AudioManager.Instance?.StopTvTalk();
-    AudioManager.Instance?.StopAlert();
+
+
+    AudioManager.Instance?.PauseGeneralAudio();
 }
 
 public void ResumeGame()
@@ -903,8 +921,10 @@ public void ResumeGame()
     if (pauseMenuPanel != null)
         pauseMenuPanel.SetActive(false);
 
-    if (tvVideoPlayer != null)
-        tvVideoPlayer.Play();
+if (tvFrameAnimator != null)
+    tvFrameAnimator.Resume();
+
+    AudioManager.Instance?.UnPauseGeneralAudio();
 }
 
 public void QuitToMainMenu()
@@ -913,9 +933,9 @@ public void QuitToMainMenu()
     isPaused = false;
 
     AudioManager.Instance?.PlayButtonClick();
-    AudioManager.Instance?.StopAlert();
-    AudioManager.Instance?.StopTvTalk();
+    AudioManager.Instance?.StopGeneralAudio();
 
-    SceneManager.LoadScene("MainMenu");
+    SceneManager.LoadScene("MainSplash");
+    AudioManager.Instance?.PlayGameplayBgm();
 }
 }

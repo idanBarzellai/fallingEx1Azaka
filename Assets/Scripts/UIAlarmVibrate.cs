@@ -46,7 +46,7 @@ timer -= Time.deltaTime;
                 if (AudioManager.Instance != null)
                     AudioManager.Instance.PlayVibrate();
 
-                    Handheld.Vibrate();
+                    // Handheld.Vibrate();
 
                 playedVibrateSfxThisPulse = true;
             }
