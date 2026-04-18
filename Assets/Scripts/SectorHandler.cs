@@ -83,6 +83,13 @@ public class SectorHandler : MonoBehaviour
 
     private readonly List<GameObject> activeSmokeInstances = new List<GameObject>();
 
+    private Coroutine invalidActionFlashRoutine;
+
+[Header("Invalid Action Feedback")]
+public Color invalidActionFlashColor = new Color(1f, 0.15f, 0.15f, 1f);
+public float invalidActionFlashDuration = 0.45f;
+public float invalidActionFlashInterval = 0.08f;
+
     private void Awake()
     {
         AutoAssignReferences();
@@ -182,6 +189,7 @@ public class SectorHandler : MonoBehaviour
         if (currentState == SectorState.Smoked)
         {
             AudioManager.Instance.PlayInvalidAction();
+            PlayInvalidActionFlash();
             GameManager.Instance?.LoseLife("Released " + sectorName + " before smoke cleared.", sectorName.ToString());
             return;
         }
@@ -189,7 +197,7 @@ public class SectorHandler : MonoBehaviour
         if (currentState == SectorState.AmbulanceWorking)
         {
             AudioManager.Instance.PlayInvalidAction();
-
+PlayInvalidActionFlash();
             GameManager.Instance?.LoseLife("Released " + sectorName + " before ambulance finished.", sectorName.ToString());
             return;
         }
@@ -914,6 +922,37 @@ private void SpawnSmokeAtPoint(Vector2 worldAnchoredPosition, RectTransform sour
             onTick?.Invoke();
         }
     }
+
+    public void PlayInvalidActionFlash()
+{
+    if (baseImage == null)
+        return;
+
+    if (invalidActionFlashRoutine != null)
+        StopCoroutine(invalidActionFlashRoutine);
+
+    invalidActionFlashRoutine = StartCoroutine(InvalidActionFlashRoutine());
+}
+
+private IEnumerator InvalidActionFlashRoutine()
+{
+    float elapsed = 0f;
+    Color originalColor = baseImage.color;
+
+    while (elapsed < invalidActionFlashDuration)
+    {
+        float wave = (Mathf.Sin(elapsed * 40f) + 1f) * 0.5f;
+        Color flashColor = Color.Lerp(originalColor, invalidActionFlashColor, wave);
+        flashColor.a = originalColor.a;
+        baseImage.color = flashColor;
+
+        elapsed += Time.deltaTime;
+        yield return null;
+    }
+
+    UpdateVisual();
+    invalidActionFlashRoutine = null;
+}
 
     public void ResetSectorCompletely()
 {

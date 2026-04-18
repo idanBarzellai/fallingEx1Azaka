@@ -145,13 +145,13 @@ TextureImporter:
       name: ChatGPT Image Apr 18, 2026, 11_25_05 AM_0
       rect:
         serializedVersion: 2
-        x: 313
+        x: 328
         y: 389
-        width: 934
-        height: 312
+        width: 893
+        height: 265
       alignment: 9
-      pivot: {x: 0.5119939, y: 0.45751366}
-      border: {x: 44, y: 31, z: 46, w: 77}
+      pivot: {x: 0.49936083, y: 0.4970878}
+      border: {x: 27, y: 31, z: 20, w: 35}
       customData: 
       outline: []
       physicsShape: []
