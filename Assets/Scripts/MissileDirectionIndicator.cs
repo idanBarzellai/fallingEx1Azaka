@@ -7,14 +7,14 @@ public class MissileDirectionIndicator : MonoBehaviour
     public Image image;
     public float edgePadding = 70f;
 
-    private Rect visibleRect;
     private RectTransform targetMissile;
+    private RectTransform boundsRect;
     private bool isTracking = false;
 
     private void Awake()
     {
         if (rectTransform == null)
-            rectTransform = GetComponentInChildren<RectTransform>();
+            rectTransform = GetComponent<RectTransform>();
 
         if (image == null)
             image = GetComponent<Image>();
@@ -22,10 +22,10 @@ public class MissileDirectionIndicator : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    public void BeginTracking(RectTransform missileRect, Rect cameraRect)
+    public void BeginTracking(RectTransform missileRect, RectTransform trackingBounds)
     {
         targetMissile = missileRect;
-        visibleRect = cameraRect;
+        boundsRect = trackingBounds;
         isTracking = true;
         gameObject.SetActive(true);
         UpdatePositionImmediate();
@@ -35,12 +35,13 @@ public class MissileDirectionIndicator : MonoBehaviour
     {
         isTracking = false;
         targetMissile = null;
+        boundsRect = null;
         gameObject.SetActive(false);
     }
 
     private void Update()
     {
-        if (!isTracking || targetMissile == null)
+        if (!isTracking || targetMissile == null || boundsRect == null)
             return;
 
         UpdatePositionImmediate();
@@ -48,9 +49,18 @@ public class MissileDirectionIndicator : MonoBehaviour
 
     private void UpdatePositionImmediate()
     {
-        Vector2 missilePos = targetMissile.anchoredPosition;
+        Rect rect = boundsRect.rect;
 
-        if (visibleRect.Contains(missilePos))
+        float xMin = rect.xMin;
+        float xMax = rect.xMax;
+        float yMin = rect.yMin;
+        float yMax = rect.yMax;
+
+        // Convert missile position into boundsRect local space
+        Vector2 missileWorldPos = targetMissile.TransformPoint(targetMissile.rect.center);
+        Vector2 missileLocalPos = boundsRect.InverseTransformPoint(missileWorldPos);
+
+        if (rect.Contains(missileLocalPos))
         {
             gameObject.SetActive(false);
             return;
@@ -60,46 +70,42 @@ public class MissileDirectionIndicator : MonoBehaviour
             gameObject.SetActive(true);
 
         float clampedX = Mathf.Clamp(
-            missilePos.x,
-            visibleRect.xMin + edgePadding,
-            visibleRect.xMax - edgePadding
+            missileLocalPos.x,
+            xMin + edgePadding,
+            xMax - edgePadding
         );
 
         float clampedY = Mathf.Clamp(
-            missilePos.y,
-            visibleRect.yMin + edgePadding,
-            visibleRect.yMax - edgePadding
+            missileLocalPos.y,
+            yMin + edgePadding,
+            yMax - edgePadding
         );
 
-        bool outsideHorizontal = missilePos.x < visibleRect.xMin || missilePos.x > visibleRect.xMax;
-        bool outsideVertical = missilePos.y < visibleRect.yMin || missilePos.y > visibleRect.yMax;
+        bool outsideHorizontal = missileLocalPos.x < xMin || missileLocalPos.x > xMax;
+        bool outsideVertical = missileLocalPos.y < yMin || missileLocalPos.y > yMax;
 
         if (outsideHorizontal && outsideVertical)
         {
-            float dxLeft = Mathf.Abs(missilePos.x - visibleRect.xMin);
-            float dxRight = Mathf.Abs(missilePos.x - visibleRect.xMax);
-            float dyBottom = Mathf.Abs(missilePos.y - visibleRect.yMin);
-            float dyTop = Mathf.Abs(missilePos.y - visibleRect.yMax);
+            float dxLeft = Mathf.Abs(missileLocalPos.x - xMin);
+            float dxRight = Mathf.Abs(missileLocalPos.x - xMax);
+            float dyBottom = Mathf.Abs(missileLocalPos.y - yMin);
+            float dyTop = Mathf.Abs(missileLocalPos.y - yMax);
 
             float minDist = Mathf.Min(dxLeft, dxRight, dyBottom, dyTop);
 
-            if (minDist == dxLeft) clampedX = visibleRect.xMin + edgePadding;
-            else if (minDist == dxRight) clampedX = visibleRect.xMax - edgePadding;
-            else if (minDist == dyBottom) clampedY = visibleRect.yMin + edgePadding;
-            else clampedY = visibleRect.yMax - edgePadding;
+            if (minDist == dxLeft) clampedX = xMin + edgePadding;
+            else if (minDist == dxRight) clampedX = xMax - edgePadding;
+            else if (minDist == dyBottom) clampedY = yMin + edgePadding;
+            else clampedY = yMax - edgePadding;
         }
         else
         {
-            if (missilePos.x < visibleRect.xMin) clampedX = visibleRect.xMin + edgePadding;
-            if (missilePos.x > visibleRect.xMax) clampedX = visibleRect.xMax - edgePadding;
-            if (missilePos.y < visibleRect.yMin) clampedY = visibleRect.yMin + edgePadding;
-            if (missilePos.y > visibleRect.yMax) clampedY = visibleRect.yMax - edgePadding;
+            if (missileLocalPos.x < xMin) clampedX = xMin + edgePadding;
+            if (missileLocalPos.x > xMax) clampedX = xMax - edgePadding;
+            if (missileLocalPos.y < yMin) clampedY = yMin + edgePadding;
+            if (missileLocalPos.y > yMax) clampedY = yMax - edgePadding;
         }
 
         rectTransform.anchoredPosition = new Vector2(clampedX, clampedY);
-
-        // Vector2 toMissile = missilePos - rectTransform.anchoredPosition;
-        // float angle = Mathf.Atan2(toMissile.y, toMissile.x) * Mathf.Rad2Deg;
-        // rectTransform.rotation = Quaternion.Euler(0f, 0f, angle - 90f);
     }
 }

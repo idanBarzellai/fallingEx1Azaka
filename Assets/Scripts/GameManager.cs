@@ -24,7 +24,7 @@ public class GameManager : MonoBehaviour
     public RectTransform indicatorLayer;
 
     [Header("Camera Frame In Canvas Space")]
-    public Rect visibleCameraRect = new Rect(-540f, -960f, 1080f, 1920f);
+    // public Rect visibleCameraRect = new Rect(-540f, -960f, 1080f, 1920f);
 
     [Header("UI")]
     public TMP_Text crisisAvoidedCounterText;
@@ -236,7 +236,7 @@ missile.Launch(
 
 
         if (missileData.indicatorUI != null)
-            missileData.indicatorUI.BeginTracking(missile.RectTransform, visibleCameraRect);
+            missileData.indicatorUI.BeginTracking(missile.RectTransform, indicatorLayer);
     }
 
     public bool HasActiveIncomingMissiles()
@@ -667,16 +667,16 @@ private void PlayVideo()
         }
 
         // Calculate scale factor to fit the visible camera rect
-        float scaleX = visibleCameraRect.width / rectTransform.rect.width;
-        float scaleY = visibleCameraRect.height / rectTransform.rect.height;
+        float scaleX = Screen.width / rectTransform.rect.width;
+        float scaleY = Screen.height / rectTransform.rect.height;
         float scaleAdjust = 0.9f; // Optional: Adjust to add some padding around the UI
         float scaleFactor = Mathf.Min(scaleX, scaleY) * scaleAdjust;
         Vector3 targetScale = new Vector3(scaleFactor, scaleFactor, 1f);
 
         // Center the UI element in the visible camera rect
         Vector2 centeredPosition = new Vector2(
-            visibleCameraRect.x + visibleCameraRect.width / 2f,
-            visibleCameraRect.y + visibleCameraRect.height / 2f - 300f
+            0,
+             - 300f
         );
 
         if (uiScaleCenterRoutine != null)
