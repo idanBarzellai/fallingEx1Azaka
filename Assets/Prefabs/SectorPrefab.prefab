@@ -91,9 +91,19 @@ MonoBehaviour:
   alertIconSprite: {fileID: 21300000, guid: 3c8217137903a9643999ab0a95b747d9, type: 3}
   releaseIconSprite: {fileID: 21300000, guid: 9d70937909c2c1e4d90eeaf13dddc08c, type: 3}
   ambulanceIconSprite: {fileID: 21300000, guid: 01a3669b05cd36f4880966843eef575d, type: 3}
-  confettiPrefab: {fileID: 0}
   fadedHintAlpha: 0.35
   activeTimerAlpha: 0.95
+  invalidActionFlashColor: {r: 1, g: 0.15, b: 0.15, a: 1}
+  invalidActionFlashDuration: 0.45
+  invalidActionFlashInterval: 0.08
+  emojiBurstItemPrefab: {fileID: 7029958055915088139, guid: 07b43bf4e64f2f241be2c576ffad89ed, type: 3}
+  angryFaceSprite: {fileID: -8784324362712292092, guid: 6dbdce7f98ca8d94a85c519fffa34a92, type: 3}
+  happyFaceSprite: {fileID: -4148763445294920546, guid: 847ddc4f657aafc49a2c9f90f72a492d, type: 3}
+  angryBurstCount: 20
+  happyBurstCount: 20
+  emojiBurstRadius: 100
+  emojiSizeRange: {x: 20, y: 50}
+  emojiBurstLifetime: 3
 --- !u!1 &4434592650894215718
 GameObject:
   m_ObjectHideFlags: 0

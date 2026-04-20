@@ -295,6 +295,7 @@ private void OnMissileTapped(MissileEventData missileData)
     if (sector.currentState == SectorState.NeedsAmbulanceCheck && previousState == SectorState.Incoming)
     {
         LoseLife("Intercepted missile in " + sector.sectorName + " without alert.", sector.sectorName.ToString());
+                sector.PlayAngryBurst();
 
         sector.PlayInterceptSmokeSequenceAt(missileHitPosition, missileLayer);
 
@@ -348,6 +349,8 @@ private void OnMissileTapped(MissileEventData missileData)
         if (sector.currentState == SectorState.NeedsAmbulance){
     LoseLife("Missile hit alerted sector " + sector.sectorName, sector.sectorName.ToString());
             StartAmbulancePenaltyLoop(sector);
+                            sector.PlayAngryBurst();
+
 
         }
 
@@ -447,6 +450,8 @@ private IEnumerator AmbulanceRoutine(SectorHandler sector)
             if (sector.currentState == SectorState.NeedsAmbulance ||
                 sector.currentState == SectorState.NeedsAmbulanceCheck)
             {
+                            sector.PlayAngryBurst();
+
                 LoseLife("Ambulance was too late in " + sector.sectorName + ".", sector.sectorName.ToString()   );
             }
         });
@@ -462,6 +467,7 @@ private IEnumerator AmbulanceRoutine(SectorHandler sector)
             if (sector.currentState == SectorState.WaitingForRelease)
             {
                 LoseLife("Citizens were not released in time in " + sector.sectorName + ".", sector.sectorName.ToString());
+                sector.PlayAngryBurst();
             }
         });
     }

@@ -90,6 +90,17 @@ public Color invalidActionFlashColor = new Color(1f, 0.15f, 0.15f, 1f);
 public float invalidActionFlashDuration = 0.45f;
 public float invalidActionFlashInterval = 0.08f;
 
+[Header("Emoji Burst VFX")]
+public GameObject emojiBurstItemPrefab;
+public Sprite angryFaceSprite;
+public Sprite happyFaceSprite;
+
+public int angryBurstCount = 10;
+public int happyBurstCount = 12;
+public float emojiBurstRadius = 95f;
+public Vector2 emojiSizeRange = new Vector2(20f, 38f);
+public float emojiBurstLifetime = 1.0f;
+
     private void Awake()
     {
         AutoAssignReferences();
@@ -181,6 +192,8 @@ public float invalidActionFlashInterval = 0.08f;
             SetState(SectorState.Idle);
             Debug.Log(sectorName + " released back to idle.");
             GameManager.Instance?.CrisisAvoided(sectorName.ToString());
+            PlayHappyBurst();
+
         // StartCoroutine(PlayConfettiBurst());
 
             return;
@@ -189,6 +202,8 @@ public float invalidActionFlashInterval = 0.08f;
         if (currentState == SectorState.Smoked)
         {
             AudioManager.Instance.PlayInvalidAction();
+                PlayAngryBurst();
+
             PlayInvalidActionFlash();
             GameManager.Instance?.LoseLife("Released " + sectorName + " before smoke cleared.", sectorName.ToString());
             return;
@@ -197,6 +212,8 @@ public float invalidActionFlashInterval = 0.08f;
         if (currentState == SectorState.AmbulanceWorking)
         {
             AudioManager.Instance.PlayInvalidAction();
+                PlayAngryBurst();
+
 PlayInvalidActionFlash();
             GameManager.Instance?.LoseLife("Released " + sectorName + " before ambulance finished.", sectorName.ToString());
             return;
@@ -952,6 +969,105 @@ private IEnumerator InvalidActionFlashRoutine()
 
     UpdateVisual();
     invalidActionFlashRoutine = null;
+}
+
+public void PlayEmojiBurst(Sprite emojiSprite, int count)
+{
+    if (emojiBurstItemPrefab == null || emojiSprite == null || vfxAnchor == null)
+        return;
+
+    for (int i = 0; i < count; i++)
+    {
+        GameObject emoji = Instantiate(emojiBurstItemPrefab, vfxAnchor);
+        RectTransform rt = emoji.GetComponent<RectTransform>();
+        Image img = emoji.GetComponent<Image>();
+        CanvasGroup cg = emoji.GetComponent<CanvasGroup>();
+        AutoDestroyAfterSeconds autoDestroy = emoji.GetComponent<AutoDestroyAfterSeconds>();
+
+        if (img != null)
+            img.sprite = emojiSprite;
+
+        if (autoDestroy != null)
+            autoDestroy.lifetime = emojiBurstLifetime;
+
+        Vector2 offset = Random.insideUnitCircle * emojiBurstRadius;
+        float size = Random.Range(emojiSizeRange.x, emojiSizeRange.y);
+
+        if (rt != null)
+        {
+            rt.anchorMin = new Vector2(0.5f, 0.5f);
+            rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = offset;
+            rt.sizeDelta = new Vector2(size, size);
+            float flip = Random.value > 0.5f ? 1f : -1f;
+
+rt.localScale = new Vector3(flip, 1f, 1f);
+            rt.localRotation = Quaternion.Euler(0f, 0f, Random.Range(-18f, 18f));
+        }
+
+        emoji.transform.SetAsLastSibling();
+
+        StartCoroutine(AnimateEmojiBurstItem(rt, cg));
+    }
+}
+
+private IEnumerator AnimateEmojiBurstItem(RectTransform rt, CanvasGroup cg)
+{
+    if (rt == null)
+        yield break;
+
+    Vector2 startPos = rt.anchoredPosition;
+    Vector2 drift = Random.insideUnitCircle * 18f;
+
+    float duration = emojiBurstLifetime;
+    float elapsed = 0f;
+
+    float flip = rt.localScale.x >= 0 ? 1f : -1f;
+
+Vector3 startScale = new Vector3(flip, 1f, 1f) * Random.Range(0.85f, 1.0f);
+Vector3 peakScale = startScale * Random.Range(1.08f, 1.2f);
+
+    if (cg != null)
+        cg.alpha = 0f;
+
+    while (elapsed < duration)
+    {
+         if (rt == null || cg == null || cg.gameObject == null)
+        yield break;
+
+        elapsed += Time.deltaTime;
+        float t = Mathf.Clamp01(elapsed / duration);
+
+        if (cg != null)
+        {
+            if (t < 0.15f)
+                cg.alpha = Mathf.Lerp(0f, 1f, t / 0.15f);
+            else if (t > 0.75f)
+                cg.alpha = Mathf.Lerp(1f, 0f, (t - 0.75f) / 0.25f);
+            else
+                cg.alpha = 1f;
+        }
+
+        rt.anchoredPosition = Vector2.Lerp(startPos, startPos + drift, t);
+
+        if (t < 0.2f)
+            rt.localScale = Vector3.Lerp(startScale, peakScale, t / 0.2f);
+        else
+            rt.localScale = Vector3.Lerp(peakScale, startScale, (t - 0.2f) / 0.8f);
+
+        yield return null;
+    }
+}
+
+public void PlayAngryBurst()
+{
+    PlayEmojiBurst(angryFaceSprite, angryBurstCount);
+}
+
+public void PlayHappyBurst()
+{
+    PlayEmojiBurst(happyFaceSprite, happyBurstCount);
 }
 
     public void ResetSectorCompletely()

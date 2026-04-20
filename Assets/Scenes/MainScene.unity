@@ -5477,6 +5477,10 @@ PrefabInstance:
       propertyPath: confettiPrefab
       value: 
       objectReference: {fileID: 2065304939481688976, guid: 8a3ca9b949a966f4cb4fa2a459b312a2, type: 3}
+    - target: {fileID: 136338918689458517, guid: 7bc5545b20e276645bfbc0fba759c7dd, type: 3}
+      propertyPath: emojiBurstItemPrefab
+      value: 
+      objectReference: {fileID: 7029958055915088139, guid: 07b43bf4e64f2f241be2c576ffad89ed, type: 3}
     - target: {fileID: 205653844773083863, guid: 7bc5545b20e276645bfbc0fba759c7dd, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
